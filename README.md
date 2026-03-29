@@ -1,2 +1,2 @@
 # sentinel
-Real-time log collection and security monitoring agent for web servers.
+A lightweight security monitoring system that collects logs and system metrics from web servers, detects suspicious activity, and sends real-time alerts.
