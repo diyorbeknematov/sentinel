@@ -7,7 +7,7 @@ import (
 )
 
 type Repository struct {
-
+	
 }
 
 func NewRepository(db *sqlx.DB, logger *slog.Logger) *Repository {
