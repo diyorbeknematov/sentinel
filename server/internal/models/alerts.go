@@ -28,3 +28,16 @@ type MarkAlertRead struct {
 	Id     uuid.UUID `json:"id" validate:"required"`
 	IsRead bool      `json:"is_read" validate:"required"`
 }
+
+type FilterAlert struct {
+	AgentId  *uuid.UUID `form:"agent_id"`
+	Type     *string    `form:"type"`
+	Severity *string    `form:"severity"`
+	IsRead   *bool       `form:"is_read"`
+
+	From *time.Time `form:"from" time_format:"2006-01-02"`
+	To   *time.Time `form:"to" time_format:"2006-01-02"`
+
+	Limit  int `form:"limit"`
+	Offset int `form:"offset"`
+}

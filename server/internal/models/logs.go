@@ -24,3 +24,15 @@ type CreateLog struct {
 	Message   string    `json:"message" validate:"required"`
 	IPAddress string    `json:"ip_address" validate:"required"`
 }
+
+type FilterLog struct {
+	AgentId   uuid.UUID `json:"agent_id"`
+	Type      string    `json:"type"`
+	Level     string    `json:"level"`
+	IPAddress string    `json:"ip_address"`
+	From      time.Time `json:"from"`
+	To        time.Time `json:"to"`
+
+	Limit  int
+	Offest int
+}

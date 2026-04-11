@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS alerts (
     type VARCHAR(50),
     message TEXT,
     severity VARCHAR(20),
+    is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_alerts_agent

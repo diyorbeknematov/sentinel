@@ -22,3 +22,12 @@ type CreateMetric struct {
 	RAM     float32   `json:"ram" validate:"required"`
 	Disk    float32   `json:"disk" validate:"required"`
 }
+
+type FilterMetrics struct {
+	AgentId uuid.UUID    `json:"agent_id"`
+	From    time.Time `json:"from"`
+	To      time.Time `json:"to"`
+
+	Limit  int
+	Offest int
+}
