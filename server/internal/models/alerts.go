@@ -33,7 +33,7 @@ type FilterAlert struct {
 	AgentId  *uuid.UUID `form:"agent_id"`
 	Type     *string    `form:"type"`
 	Severity *string    `form:"severity"`
-	IsRead   *bool       `form:"is_read"`
+	IsRead   *bool      `form:"is_read"`
 
 	From *time.Time `form:"from" time_format:"2006-01-02"`
 	To   *time.Time `form:"to" time_format:"2006-01-02"`

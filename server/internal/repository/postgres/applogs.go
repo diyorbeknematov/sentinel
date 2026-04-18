@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"log/slog"
 	"strings"
 
 	"github.com/diyorbek/sentinel/internal/models"
@@ -9,25 +8,24 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type logRepo struct {
-	db     *sqlx.DB
-	logger *slog.Logger
+type appLogRepo struct {
+	db *sqlx.DB
 }
 
-func NewLogRepo(db *sqlx.DB, logger *slog.Logger) *logRepo {
-	return &logRepo{
-		db:     db,
-		logger: logger,
+func NewAppLogRepo(db *sqlx.DB) *appLogRepo {
+	return &appLogRepo{
+		db: db,
 	}
 }
 
-func (r *logRepo) CreateLog(log models.CreateLog) (uuid.UUID, error) {
+func (r *appLogRepo) CreateAppLog(log models.CreateAppLog) (uuid.UUID, error) {
 	id := uuid.New()
 
 	query := `
-	INERT INTO logs (
+	INERT INTO applogs (
 		id,
 		agent_id,
+		user_id,
 		type,
 		level,
 		message,
@@ -37,63 +35,22 @@ func (r *logRepo) CreateLog(log models.CreateLog) (uuid.UUID, error) {
 	if _, err := r.db.Exec(query,
 		id,
 		log.AgentId,
+		log.UserId,
 		log.Type,
 		log.Level,
 		log.Message,
 		log.IPAddress,
 	); err != nil {
-		r.logger.Error(err.Error())
 		return uuid.Nil, err
 	}
 
 	return id, nil
 }
 
-func (r *logRepo) CreateLogsBatch(logs []models.CreateLog) error {
-	tx, err := r.db.Begin()
-	if err != nil {
-		r.logger.Error(err.Error())
-		return err
-	}
-
+func (r *appLogRepo) GetLogByID(id uuid.UUID) (models.Log, error) {
+	var log models.Log
 	query := `
-	INSERT INTO logs (
-		id,
-		agent_id,
-		type,
-		level,
-		message,
-		ip_address
-	)VALUES($1, $2, $3, $4, $5, %6)
-	`
-	for _, log := range logs {
-		id := uuid.New()
-
-		if _, err := tx.Exec(query,
-			id,
-			log.AgentId,
-			log.Type,
-			log.Level,
-			log.Message,
-			log.IPAddress,
-		); err != nil {
-			r.logger.Error(err.Error())
-			tx.Rollback()
-			return err
-		}
-	}
-
-	if err = tx.Commit(); err != nil {
-		r.logger.Error(err.Error())
-		return err
-	}
-
-	return nil
-}
-
-func (r *logRepo) ListLogs(filter models.FilterLog) ([]models.Log, int, error) {
-	baseQuery := `
-	SELECT 
+	SELECT
 		id,
 		agent_id,
 		type,
@@ -101,22 +58,57 @@ func (r *logRepo) ListLogs(filter models.FilterLog) ([]models.Log, int, error) {
 		message,
 		ip_address,
 		recorded_at
-	FROM logs
-	WHER TRUE 
+	FROM applogs
+	WHER id = $1;
 	`
 
-	countQuery := `SELECT COUNT(id) FROM logs WHERE TRUE `
+	if err := r.db.QueryRow(query, id).Scan(
+		&log.Id,
+		&log.AgentId,
+		&log.Type,
+		&log.Level,
+		&log.Message,
+		&log.IPAddress,
+		&log.RecordedAt,
+	); err != nil {
+		return models.Log{}, err
+	}
+
+	return log, nil
+}
+
+func (r *appLogRepo) ListLogs(filter models.FilterAppLog) ([]models.Log, int, error) {
+	baseQuery := `
+	SELECT 
+		id,
+		agent_id,
+		user_id,
+		type,
+		level,
+		message,
+		ip_address,
+		recorded_at
+	FROM applogs
+	WHERE TRUE 
+	`
+
+	countQuery := `SELECT COUNT(id) FROM applogs WHERE TRUE `
 
 	conditions := []string{}
 	params := map[string]any{
 		"limit":  filter.Limit,
-		"offset": filter.Offest,
+		"offset": filter.Offset,
 	}
 
 	// Add search condition
 	if filter.AgentId != uuid.Nil {
 		conditions = append(conditions, "agent_id = :agentId")
 		params["agentId"] = filter.AgentId
+	}
+
+	if filter.UserId != "" {
+		conditions = append(conditions, "user_id = :userId")
+		params["userId"] = filter.UserId
 	}
 
 	if filter.Type != "" {
@@ -156,7 +148,6 @@ func (r *logRepo) ListLogs(filter models.FilterLog) ([]models.Log, int, error) {
 	// Exectue the main query
 	rows, err := r.db.NamedQuery(baseQuery, params)
 	if err != nil {
-		r.logger.Error(err.Error())
 		return nil, 0, err
 	}
 	defer rows.Close()
@@ -167,13 +158,14 @@ func (r *logRepo) ListLogs(filter models.FilterLog) ([]models.Log, int, error) {
 		if err := rows.Scan(
 			&l.Id,
 			&l.AgentId,
+			&l.UserId,
 			&l.Type,
 			&l.Level,
 			&l.Message,
 			&l.IPAddress,
 			&l.RecordedAt,
 		); err != nil {
-			r.logger.Error(err.Error())
+
 			return nil, 0, err
 		}
 
@@ -183,12 +175,10 @@ func (r *logRepo) ListLogs(filter models.FilterLog) ([]models.Log, int, error) {
 	var total int
 	countQuery, countArgs, err := sqlx.Named(countQuery, params)
 	if err != nil {
-		r.logger.Error(err.Error())
 		return nil, 0, err
 	}
 
 	if err := r.db.Get(&total, countQuery, countArgs...); err != nil {
-		r.logger.Error(err.Error())
 		return nil, 0, err
 	}
 

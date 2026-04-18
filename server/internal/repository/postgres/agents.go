@@ -3,7 +3,6 @@ package postgres
 import (
 	"database/sql"
 	"errors"
-	"log/slog"
 	"strings"
 
 	"github.com/diyorbek/sentinel/internal/models"
@@ -16,18 +15,16 @@ var (
 )
 
 type agentRepo struct {
-	db     *sqlx.DB
-	logger *slog.Logger
+	db *sqlx.DB
 }
 
-func NewAgentRepo(db *sqlx.DB, logger *slog.Logger) *agentRepo {
+func NewAgentRepo(db *sqlx.DB) *agentRepo {
 	return &agentRepo{
-		db:     db,
-		logger: logger,
+		db: db,
 	}
 }
 
-func (r *agentRepo) CreateAgent(agent models.Agent) (uuid.UUID, error) {
+func (r *agentRepo) CreateAgent(agent models.CreateAgent) (uuid.UUID, error) {
 	id := uuid.New()
 
 	query := `
@@ -48,7 +45,6 @@ func (r *agentRepo) CreateAgent(agent models.Agent) (uuid.UUID, error) {
 		agent.IPAddress,
 		agent.LastSeen,
 	); err != nil {
-		r.logger.Error(err.Error())
 		return uuid.Nil, err
 	}
 
@@ -80,7 +76,6 @@ func (r *agentRepo) GetAgentByID(id uuid.UUID) (models.Agent, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			return models.Agent{}, err
 		}
-		r.logger.Error(err.Error())
 	}
 
 	return agent, nil
@@ -113,7 +108,6 @@ func (r *agentRepo) GetAgentByAPIKey(apiKey string) (models.Agent, error) {
 			return models.Agent{}, err
 		}
 
-		r.logger.Error(err.Error())
 		return models.Agent{}, err
 	}
 
@@ -167,7 +161,6 @@ func (r *agentRepo) ListAgents(filter models.FilterAgent) ([]models.Agent, int, 
 
 	rows, err := r.db.NamedQuery(baseQuery, params)
 	if err != nil {
-		r.logger.Error(err.Error())
 		return nil, 0, err
 	}
 	defer rows.Close()
@@ -183,7 +176,7 @@ func (r *agentRepo) ListAgents(filter models.FilterAgent) ([]models.Agent, int, 
 			&a.LastSeen,
 			&a.CreatedAt,
 		); err != nil {
-			r.logger.Error(err.Error())
+
 			return nil, 0, err
 		}
 		agents = append(agents, a)
@@ -193,13 +186,11 @@ func (r *agentRepo) ListAgents(filter models.FilterAgent) ([]models.Agent, int, 
 	var total int
 	countQuery, countArgs, err := sqlx.Named(countQuery, params)
 	if err != nil {
-		r.logger.Error(err.Error())
 		return nil, 0, err
 	}
 	countQuery = r.db.Rebind(countQuery)
 
 	if err := r.db.Get(&total, countQuery, countArgs...); err != nil {
-		r.logger.Error(err.Error())
 		return nil, 0, err
 	}
 
@@ -220,13 +211,11 @@ func (r *agentRepo) UpdateLastSeen(lastSeen models.UpdateLastSeen) error {
 		lastSeen.LastSeen,
 	)
 	if err != nil {
-		r.logger.Error(err.Error())
 		return err
 	}
 
 	rowAffected, err := row.RowsAffected()
 	if err != nil {
-		r.logger.Error(err.Error())
 		return err
 	}
 
@@ -243,13 +232,11 @@ func (r *agentRepo) DeleteAgent(id uuid.UUID) error {
 	// Execute the query
 	row, err := r.db.Exec(query, id)
 	if err != nil {
-		r.logger.Error(err.Error())
 		return err
 	}
 
 	rowAffected, err := row.RowsAffected()
 	if err != nil {
-		r.logger.Error(err.Error())
 		return err
 	}
 

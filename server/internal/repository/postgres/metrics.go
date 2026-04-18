@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"log/slog"
 	"strings"
 
 	"github.com/diyorbek/sentinel/internal/models"
@@ -10,14 +9,12 @@ import (
 )
 
 type metricRepo struct {
-	db     *sqlx.DB
-	logger *slog.Logger
+	db *sqlx.DB
 }
 
-func NewMetricRepo(db *sqlx.DB, logger *slog.Logger) *metricRepo {
+func NewMetricRepo(db *sqlx.DB) *metricRepo {
 	return &metricRepo{
-		db:     db,
-		logger: logger,
+		db: db,
 	}
 }
 
@@ -40,7 +37,6 @@ func (r *metricRepo) CreateMetric(metric models.CreateMetric) (uuid.UUID, error)
 		metric.RAM,
 		metric.Disk,
 	); err != nil {
-		r.logger.Error(err.Error())
 		return uuid.Nil, err
 	}
 
@@ -50,7 +46,6 @@ func (r *metricRepo) CreateMetric(metric models.CreateMetric) (uuid.UUID, error)
 func (r *metricRepo) CreateMetricsBatch(metrics []models.CreateMetric) error {
 	tx, err := r.db.Begin()
 	if err != nil {
-		r.logger.Error(err.Error())
 		return err
 	}
 
@@ -73,14 +68,13 @@ func (r *metricRepo) CreateMetricsBatch(metrics []models.CreateMetric) error {
 			metric.RAM,
 			metric.Disk,
 		); err != nil {
-			r.logger.Error(err.Error())
+
 			tx.Rollback()
 			return err
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
-		r.logger.Error(err.Error())
 		return err
 	}
 
@@ -109,7 +103,6 @@ func (r *metricRepo) GetMetricsByID(id uuid.UUID) (models.Metric, error) {
 		&metric.Disk,
 		&metric.RecordedAt,
 	); err != nil {
-		r.logger.Error(err.Error())
 		return models.Metric{}, err
 	}
 
@@ -133,7 +126,7 @@ func (r *metricRepo) ListMetrics(filter models.FilterMetrics) ([]models.Metric, 
 	conditions := []string{}
 	params := map[string]any{
 		"limit":  filter.Limit,
-		"offset": filter.Offest,
+		"offset": filter.Offset,
 	}
 
 	// Add search question
@@ -164,7 +157,6 @@ func (r *metricRepo) ListMetrics(filter models.FilterMetrics) ([]models.Metric, 
 	// Execute the main query
 	rows, err := r.db.NamedQuery(baseQuery, params)
 	if err != nil {
-		r.logger.Error(err.Error())
 		return nil, 0, err
 	}
 	defer rows.Close()
@@ -180,7 +172,7 @@ func (r *metricRepo) ListMetrics(filter models.FilterMetrics) ([]models.Metric, 
 			&m.Disk,
 			&m.RecordedAt,
 		); err != nil {
-			r.logger.Error(err.Error())
+
 			return nil, 0, err
 		}
 
@@ -190,13 +182,11 @@ func (r *metricRepo) ListMetrics(filter models.FilterMetrics) ([]models.Metric, 
 	var total int
 	countQuery, countArgs, err := sqlx.Named(countQuery, params)
 	if err != nil {
-		r.logger.Error(err.Error())
 		return nil, 0, err
 	}
 	countQuery = r.db.Rebind(countQuery)
 
 	if err := r.db.Get(&total, countQuery, countArgs...); err != nil {
-		r.logger.Error(err.Error())
 		return nil, 0, err
 	}
 

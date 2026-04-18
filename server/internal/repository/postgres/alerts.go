@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"log/slog"
 	"strings"
 
 	"github.com/diyorbek/sentinel/internal/models"
@@ -10,14 +9,12 @@ import (
 )
 
 type alertRepo struct {
-	db     *sqlx.DB
-	logger *slog.Logger
+	db *sqlx.DB
 }
 
-func NewAlertRepo(db *sqlx.DB, logger *slog.Logger) *alertRepo {
+func NewAlertRepo(db *sqlx.DB) *alertRepo {
 	return &alertRepo{
-		db:     db,
-		logger: logger,
+		db: db,
 	}
 }
 
@@ -39,11 +36,40 @@ func (r *alertRepo) CreateAlert(alert models.CreateAlert) (uuid.UUID, error) {
 		alert.Message,
 		alert.Severity,
 	); err != nil {
-		r.logger.Error(err.Error())
 		return uuid.Nil, err
 	}
 
 	return id, nil
+}
+
+func (r *alertRepo) GetAlertByID(id uuid.UUID) (models.Alert, error) {
+	var alert models.Alert
+	query := `
+	SELECT
+		id,
+		agent_id,
+		type,
+		message,
+		severity,
+		is_read,
+		created_at
+	FROM alerts
+	WHERE id = $1
+	`
+
+	if err := r.db.QueryRow(query, id).Scan(
+		&alert.Id,
+		&alert.AgentId,
+		&alert.Type,
+		&alert.Message,
+		&alert.Severity,
+		&alert.IsRead,
+		&alert.CreatedAt,
+	); err != nil {
+		return models.Alert{}, err
+	}
+
+	return alert, nil
 }
 
 func (r *alertRepo) ListAlerts(filter models.FilterAlert) ([]models.Alert, int, error) {
@@ -54,6 +80,7 @@ func (r *alertRepo) ListAlerts(filter models.FilterAlert) ([]models.Alert, int, 
 		type,
 		message,
 		severity,
+		is_read,
 		created_at
 	FROM alerts
 	WHERE TRUE 
@@ -111,7 +138,6 @@ func (r *alertRepo) ListAlerts(filter models.FilterAlert) ([]models.Alert, int, 
 	// Execute the main query
 	rows, err := r.db.NamedQuery(baseQuery, params)
 	if err != nil {
-		r.logger.Error(err.Error())
 		return nil, 0, err
 	}
 	defer rows.Close()
@@ -127,7 +153,7 @@ func (r *alertRepo) ListAlerts(filter models.FilterAlert) ([]models.Alert, int, 
 			&a.Severity,
 			&a.CreatedAt,
 		); err != nil {
-			r.logger.Error(err.Error())
+
 			return nil, 0, err
 		}
 		alerts = append(alerts, a)
@@ -136,12 +162,10 @@ func (r *alertRepo) ListAlerts(filter models.FilterAlert) ([]models.Alert, int, 
 	var total int
 	countQuery, countArgs, err := sqlx.Named(countQuery, params)
 	if err != nil {
-		r.logger.Error(err.Error())
 		return nil, 0, err
 	}
 
 	if err := r.db.Get(&total, countQuery, countArgs...); err != nil {
-		r.logger.Error(err.Error())
 		return nil, 0, err
 	}
 
@@ -162,13 +186,11 @@ func (r *alertRepo) MarkAlertRead(isRead models.MarkAlertRead) error {
 		isRead.IsRead,
 	)
 	if err != nil {
-		r.logger.Error(err.Error())
 		return err
 	}
 
 	rowAffected, err := row.RowsAffected()
 	if err != nil {
-		r.logger.Error(err.Error())
 		return err
 	}
 

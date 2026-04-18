@@ -16,9 +16,10 @@ type Agent struct {
 }
 
 type CreateAgent struct {
-	Name      string `json:"name" validate:"required"`
-	APIKey    string `json:"api_key" validate:"required"`
-	IPAddress string `json:"ip_address" validate:"required"`
+	Name      string    `json:"name" validate:"required"`
+	APIKey    string    `json:"api_key" validate:"required"`
+	IPAddress string    `json:"ip_address" validate:"required"`
+	LastSeen  time.Time `json:"last_seen" validate:"required"`
 }
 
 type UpdateLastSeen struct {
@@ -32,6 +33,6 @@ type FilterAgent struct {
 	From      time.Time `json:"from"`
 	To        time.Time `json:"to"`
 
-	Limit  int
-	Offset int
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
 }

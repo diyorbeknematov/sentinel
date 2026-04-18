@@ -8,6 +8,7 @@ import (
 
 type Log struct {
 	Id         uuid.UUID `json:"id"`
+	UserId     string    `json:"user_id"`
 	Type       string    `json:"type"`
 	Level      string    `json:"level"`
 	Message    string    `json:"message"`
@@ -17,22 +18,24 @@ type Log struct {
 	AgentId uuid.UUID `json:"agent_id"`
 }
 
-type CreateLog struct {
+type CreateAppLog struct {
 	AgentId   uuid.UUID `json:"agent_id" validate:"required"`
+	UserId    string    `json:"user_id" validate:"required"`
 	Type      string    `json:"type" validate:"required"`
 	Level     string    `json:"level" validate:"required"`
 	Message   string    `json:"message" validate:"required"`
 	IPAddress string    `json:"ip_address" validate:"required"`
 }
 
-type FilterLog struct {
+type FilterAppLog struct {
 	AgentId   uuid.UUID `json:"agent_id"`
+	UserId    string    `json:"user_id"`
 	Type      string    `json:"type"`
 	Level     string    `json:"level"`
 	IPAddress string    `json:"ip_address"`
 	From      time.Time `json:"from"`
 	To        time.Time `json:"to"`
 
-	Limit  int
-	Offest int
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
 }

@@ -24,10 +24,10 @@ type CreateMetric struct {
 }
 
 type FilterMetrics struct {
-	AgentId uuid.UUID    `json:"agent_id"`
+	AgentId uuid.UUID `json:"agent_id"`
 	From    time.Time `json:"from"`
 	To      time.Time `json:"to"`
 
-	Limit  int
-	Offest int
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
 }
