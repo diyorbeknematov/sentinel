@@ -23,5 +23,5 @@ type UpdateUser struct {
 
 type UpdateRole struct {
 	Id   uuid.UUID `json:"-"`
-	Role uuid.UUID `json:"role" validate:"required"`
+	Role string    `json:"role" validate:"required"`
 }

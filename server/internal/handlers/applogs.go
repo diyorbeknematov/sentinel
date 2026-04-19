@@ -24,7 +24,7 @@ type appLogListResponse struct {
 // @Param id path string true "app log id"
 // @Success 200 {object} models.Log
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/applogs/{id} [get]
+// @Router /sentinel/api/applogs/{id} [get]
 func (h *Handler) GetAppLogByID(ctx *gin.Context) {
 	paramValue := ctx.Param("id")
 	if paramValue == "" {
@@ -65,7 +65,7 @@ func (h *Handler) GetAppLogByID(ctx *gin.Context) {
 // @Param page query int false "Page" default(1)
 // @Sucess 200 {object} appLogListResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/applogs [get]
+// @Router /sentinel/api/applogs [get]
 func (h *Handler) GetListAppLog(ctx *gin.Context) {
 	var filter models.FilterAppLog
 

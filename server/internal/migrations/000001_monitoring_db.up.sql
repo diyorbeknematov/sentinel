@@ -1,6 +1,6 @@
 -- users jadvali 
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY,
     username VARCHAR(50),
     password TEXT,
     role VARCHAR(20) -- admin, viewer

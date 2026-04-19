@@ -1,0 +1,21 @@
+{"time":"2026-04-19T23:11:23.520122678+05:00","level":"ERROR","msg":"sql: unknown driver \"postgres\" (forgotten import?)"}
+{"time":"2026-04-19T23:27:38.280900513+05:00","level":"ERROR","msg":"The username is already existed"}
+{"time":"2026-04-19T23:30:21.020583302+05:00","level":"ERROR","msg":"username yoki password xato"}
+{"time":"2026-04-19T23:30:46.761359972+05:00","level":"ERROR","msg":"username yoki password xato"}
+{"time":"2026-04-19T23:33:34.507196534+05:00","level":"ERROR","msg":"internal server error: key is of invalid type"}
+{"time":"2026-04-19T23:36:18.340774762+05:00","level":"ERROR","msg":"The username is already existed"}
+{"time":"2026-04-19T23:36:34.115487817+05:00","level":"ERROR","msg":"The username is already existed"}
+{"time":"2026-04-19T23:38:18.130466155+05:00","level":"ERROR","msg":"internal server error: key is of invalid type"}
+{"time":"2026-04-19T23:38:58.651752905+05:00","level":"ERROR","msg":"internal server error: key is of invalid type"}
+{"time":"2026-04-19T23:39:24.069527959+05:00","level":"ERROR","msg":"internal server error: key is of invalid type"}
+{"time":"2026-04-19T23:39:40.014487504+05:00","level":"ERROR","msg":"internal server error: key is of invalid type"}
+{"time":"2026-04-19T23:40:12.736435408+05:00","level":"ERROR","msg":"internal server error: key is of invalid type"}
+{"time":"2026-04-19T23:40:56.595151812+05:00","level":"ERROR","msg":"internal server error: key is of invalid type"}
+{"time":"2026-04-19T23:44:42.421385485+05:00","level":"ERROR","msg":"username yoki password xato"}
+{"time":"2026-04-19T23:47:56.427512952+05:00","level":"INFO","msg":"created user sucessfully (create user)"}
+{"time":"2026-04-19T23:48:16.872056395+05:00","level":"INFO","msg":"query is done sucessfully (get user)"}
+{"time":"2026-04-19T23:48:51.087173845+05:00","level":"INFO","msg":"user updated succussfully (update user)"}
+{"time":"2026-04-19T23:49:14.021072079+05:00","level":"WARN","msg":"invalid UUID length: 5"}
+{"time":"2026-04-19T23:49:40.29452731+05:00","level":"WARN","msg":"invalid UUID length: 5"}
+{"time":"2026-04-19T23:53:00.744273886+05:00","level":"WARN","msg":"invalid UUID length: 5"}
+{"time":"2026-04-19T23:54:10.965343829+05:00","level":"WARN","msg":"invalid UUID length: 5"}

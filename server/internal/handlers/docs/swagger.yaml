@@ -1,0 +1,1080 @@
+definitions:
+  handlers.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  handlers.SuccessResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handlers.agentListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.Agent'
+        type: array
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+    type: object
+  handlers.authResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  handlers.createAgentResponse:
+    properties:
+      id:
+        type: string
+      message:
+        type: string
+    type: object
+  handlers.createUserResponse:
+    properties:
+      id:
+        type: string
+    type: object
+  models.Agent:
+    properties:
+      api_key:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      ip_address:
+        type: string
+      last_seen:
+        type: string
+      name:
+        type: string
+    type: object
+  models.CreateAgent:
+    properties:
+      api_key:
+        type: string
+      ip_address:
+        type: string
+      last_seen:
+        type: string
+      name:
+        type: string
+    required:
+    - api_key
+    - ip_address
+    - last_seen
+    - name
+    type: object
+  models.CreateUser:
+    properties:
+      password:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - role
+    - username
+    type: object
+  models.Log:
+    properties:
+      agent_id:
+        type: string
+      id:
+        type: string
+      ip_address:
+        type: string
+      level:
+        type: string
+      message:
+        type: string
+      recorded_at:
+        type: string
+      type:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.Login:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  models.MarkAlertRead:
+    properties:
+      is_read:
+        type: boolean
+    required:
+    - is_read
+    type: object
+  models.Metric:
+    properties:
+      agent_id:
+        type: string
+      cpu:
+        type: number
+      disk:
+        type: number
+      id:
+        type: string
+      ram:
+        type: number
+      recorded_at:
+        type: string
+    type: object
+  models.NginxLog:
+    properties:
+      agent_id:
+        type: string
+      id:
+        type: string
+      ip_address:
+        type: string
+      method:
+        type: string
+      path:
+        type: string
+      recorded_at:
+        type: string
+      response_time:
+        type: integer
+      status:
+        type: integer
+    type: object
+  models.Register:
+    properties:
+      password:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - role
+    - username
+    type: object
+  models.UpdateLastSeen:
+    properties:
+      last_seen:
+        type: string
+    required:
+    - last_seen
+    type: object
+  models.UpdateRole:
+    properties:
+      role:
+        type: string
+    required:
+    - role
+    type: object
+  models.UpdateUser:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  models.User:
+    properties:
+      id:
+        type: string
+      password:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API server for application
+  title: Sentinel API
+  version: "1.0"
+paths:
+  /sentinel/api/agents:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of agents
+      parameters:
+      - description: agent name
+        in: query
+        name: name
+        type: string
+      - description: Filter from last_seen (RFC3339 format)
+        in: query
+        name: from
+        type: string
+      - description: Filter to last_seen (RFC3339 format)
+        in: query
+        name: to
+        type: string
+      - default: 10
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 1
+        description: Page
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.agentListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get list of agents
+      tags:
+      - agents
+    post:
+      consumes:
+      - application/json
+      description: Create Agent
+      parameters:
+      - description: Create Agent
+        in: body
+        name: create
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateAgent'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.createAgentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create Agent
+      tags:
+      - agents
+  /sentinel/api/agents/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Agent
+      parameters:
+      - description: agent id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Delete Agent
+      tags:
+      - agents
+    get:
+      consumes:
+      - application/json
+      description: Get Agent by id
+      parameters:
+      - description: agent id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Agent'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get Agent by id
+      tags:
+      - agents
+  /sentinel/api/agents/{id}/lastseen:
+    put:
+      consumes:
+      - application/json
+      description: Update Last Seen
+      parameters:
+      - description: agent id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: update last seen
+        in: body
+        name: update
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateLastSeen'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update Last Seen
+      tags:
+      - agents
+  /sentinel/api/alerts:
+    get:
+      consumes:
+      - application/json
+      description: Get alerts by filter
+      parameters:
+      - description: agent id
+        in: query
+        name: agent_id
+        type: string
+      - description: severity
+        in: query
+        name: severity
+        type: string
+      - description: is read
+        in: query
+        name: is_read
+        type: string
+      - description: filter from created_at (RFC3339 format)
+        in: query
+        name: from
+        type: string
+      - description: Filter to created_at (RFC3339 format)
+        in: query
+        name: to
+        type: string
+      - default: 10
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 1
+        description: Page
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get alerts by filter
+      tags:
+      - alerts
+  /sentinel/api/alerts/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get Alert by id
+      parameters:
+      - description: alert id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get Alert by id
+      tags:
+      - alerts
+  /sentinel/api/alerts/{id}/markread:
+    put:
+      consumes:
+      - application/json
+      description: Mark alert read
+      parameters:
+      - description: alert id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: mark alert reaad
+        in: body
+        name: mark_read
+        required: true
+        schema:
+          $ref: '#/definitions/models.MarkAlertRead'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Mark alert read
+      tags:
+      - alerts
+  /sentinel/api/applogs:
+    get:
+      description: Get app logs by filter
+      parameters:
+      - description: agent id
+        in: query
+        name: agent_id
+        type: string
+      - description: user id
+        in: query
+        name: user_id
+        type: string
+      - description: type
+        in: query
+        name: type
+        type: string
+      - description: level
+        in: query
+        name: level
+        type: string
+      - description: filter from recorded_at (RFC3339 format)
+        in: query
+        name: from
+        type: string
+      - description: Filter to recorded_at (RFC3339 format)
+        in: query
+        name: to
+        type: string
+      - default: 10
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 1
+        description: Page
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get app logs by filter
+      tags:
+      - logs
+  /sentinel/api/applogs/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get applog by id
+      parameters:
+      - description: app log id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Log'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get applog by id
+      tags:
+      - logs
+  /sentinel/api/metrics:
+    get:
+      consumes:
+      - application/json
+      description: Get metrics by filter
+      parameters:
+      - description: agent id
+        in: query
+        name: agent_id
+        type: string
+      - description: filter from recorded_at (RFC3339 format)
+        in: query
+        name: from
+        type: string
+      - description: Filter to recorded_at (RFC3339 format)
+        in: query
+        name: to
+        type: string
+      - default: 10
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 1
+        description: Page
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get metric by filter
+      tags:
+      - logs
+  /sentinel/api/metrics/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get metric by id
+      parameters:
+      - description: metric id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Metric'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get metric by id
+      tags:
+      - logs
+  /sentinel/api/nginxlogs:
+    get:
+      consumes:
+      - application/json
+      description: get nginxlogs by filter
+      parameters:
+      - description: agent id
+        in: query
+        name: agent_id
+        type: string
+      - description: status
+        in: query
+        name: status
+        type: string
+      - description: filter from recorded_at (RFC3339 format)
+        in: query
+        name: from
+        type: string
+      - description: Filter to recorded_at (RFC3339 format)
+        in: query
+        name: to
+        type: string
+      - default: 10
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 1
+        description: Page
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: get nginxlogs by filter
+      tags:
+      - logs
+  /sentinel/api/nginxlogs/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get nginx log by id
+      parameters:
+      - description: nginx log id
+        in: path
+        name: id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.NginxLog'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get nginx log by id
+      tags:
+      - logs
+  /sentinel/api/users:
+    post:
+      consumes:
+      - application/json
+      description: Create User
+      parameters:
+      - description: Create User
+        in: body
+        name: create
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateUser'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.createUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create User
+      tags:
+      - user
+  /sentinel/api/users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete User
+      parameters:
+      - description: user id
+        in: path
+        name: id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Delete User
+      tags:
+      - user
+    get:
+      consumes:
+      - application/json
+      description: Get User
+      parameters:
+      - description: user id
+        in: path
+        name: id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get User
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      description: Update User
+      parameters:
+      - description: user id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: update user
+        in: body
+        name: update
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update User
+      tags:
+      - user
+  /sentinel/api/users/{id}/role:
+    put:
+      consumes:
+      - application/json
+      description: Update User Role
+      parameters:
+      - description: user id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: update user role
+        in: body
+        name: update
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateRole'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update User Role
+      tags:
+      - user
+  /sentinel/login:
+    post:
+      consumes:
+      - application/json
+      description: Login User
+      parameters:
+      - description: Login
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/models.Login'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.authResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Login User
+      tags:
+      - Auth
+  /sentinel/register:
+    post:
+      consumes:
+      - application/json
+      description: Register User
+      parameters:
+      - description: Register
+        in: body
+        name: signup
+        required: true
+        schema:
+          $ref: '#/definitions/models.Register'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.authResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Register User
+      tags:
+      - Auth
+swagger: "2.0"

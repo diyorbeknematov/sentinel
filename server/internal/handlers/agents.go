@@ -29,7 +29,7 @@ type agentListResponse struct {
 // @Param create body models.CreateAgent true "Create Agent"
 // @Success 201 {object} createAgentResponse
 // @Failure 400,404,500 {object} ErrorResponse
-// @Router /sentinal/api/agents [post]
+// @Router /sentinel/api/agents [post]
 func (h *Handler) CreateAgent(ctx *gin.Context) {
 	var body models.CreateAgent
 
@@ -61,7 +61,7 @@ func (h *Handler) CreateAgent(ctx *gin.Context) {
 // @Param id path string true "agent id"
 // @Success 200 {object} models.Agent
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/agents/{id} [get]
+// @Router /sentinel/api/agents/{id} [get]
 func (h *Handler) GetAgentByID(ctx *gin.Context) {
 	paramValue := ctx.Param("id")
 	if paramValue == "" {
@@ -99,7 +99,7 @@ func (h *Handler) GetAgentByID(ctx *gin.Context) {
 // @Param page query int false "Page" default(1)
 // @Success 200 {object} agentListResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/agents [get]
+// @Router /sentinel/api/agents [get]
 func (h *Handler) ListAgents(ctx *gin.Context) {
 	var filter models.FilterAgent
 
@@ -142,7 +142,7 @@ func (h *Handler) ListAgents(ctx *gin.Context) {
 // @Param update body models.UpdateLastSeen true "update last seen"
 // @Success 200 {object} SuccessResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/agents/{id}/lastseen [put]
+// @Router /sentinel/api/agents/{id}/lastseen [put]
 func (h *Handler) UpdateLastSeen(ctx *gin.Context) {
 	var paramValue = ctx.Param("id")
 	if paramValue == "" {
@@ -186,7 +186,7 @@ func (h *Handler) UpdateLastSeen(ctx *gin.Context) {
 // @Param id path string true "agent id"
 // @Success 200 {object} SuccessResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/agents/{id} [delete]
+// @Router /sentinel/api/agents/{id} [delete]
 func (h *Handler) DeleteAgent(ctx *gin.Context) {
 	var paramValue = ctx.Param("id")
 	if paramValue == "" {

@@ -3,6 +3,7 @@ package service
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/diyorbek/sentinel/internal/config"
@@ -43,10 +44,11 @@ func (s *authService) CreateToken(user models.User, tokenType string, expiresAt 
 		},
 	}
 
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	token, err := jwtToken.SignedString([]byte(s.cfg.ACCESS_TOKEN))
 	if err != nil {
+		fmt.Println("Xatolik shu yerda")
 		return nil, apperrors.Internal(err)
 	}
 
@@ -102,14 +104,14 @@ func (s *authService) Register(req models.Register) (*models.Token, *models.Toke
 	} else if err != sql.ErrNoRows {
 		return nil, nil, apperrors.Internal(err)
 	}
-
+	
 	// hashing the password
 	hashedPass, err := HassPassword(req.Password)
 	if err != nil {
 		return nil, nil, err
 	}
 	req.Password = hashedPass
-
+	
 	userId, err := s.repo.User.CreateUser(models.CreateUser{
 		UserName: req.UserName,
 		Password: req.Password,
@@ -136,7 +138,7 @@ func (s *authService) Login(req models.Login) (*models.Token, *models.Token, err
 		return nil, nil, apperrors.Internal(err)
 	}
 
-	if VerifyPassword(req.Password, user.Password) {
+	if !VerifyPassword(req.Password, user.Password) {
 		return nil, nil, apperrors.BadRequest("username yoki password xato")
 	}
 

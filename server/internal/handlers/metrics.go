@@ -24,7 +24,7 @@ type metricListResponse struct {
 // @Param id path string true "metric id"
 // @Success 200 {object} models.Metric
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/metrics/{id} [get]
+// @Router /sentinel/api/metrics/{id} [get]
 func (h *Handler) GetMetricsByID(ctx *gin.Context) {
 	paramValue := ctx.Param("id")
 	if paramValue == "" {
@@ -62,7 +62,7 @@ func (h *Handler) GetMetricsByID(ctx *gin.Context) {
 // @Param page query int false "Page" default(1)
 // @Sucess 200 {object} metricListResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/metrics [get]
+// @Router /sentinel/api/metrics [get]
 func (h *Handler) ListMetrics(ctx *gin.Context) {
 	var filter models.FilterMetrics
 

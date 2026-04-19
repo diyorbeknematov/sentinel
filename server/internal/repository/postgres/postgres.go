@@ -6,6 +6,8 @@ import (
 
 	"github.com/diyorbek/sentinel/internal/config"
 	"github.com/jmoiron/sqlx"
+
+	_ "github.com/lib/pq"
 )
 
 func DBConnection() (*sqlx.DB, error) {

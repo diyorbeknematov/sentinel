@@ -37,12 +37,12 @@ func (h *Handler) InitRoutes(cfg *config.Config) *gin.Engine {
 }
 
 func (h *Handler) SetupPublicRoutes(router *gin.Engine) {
-	router.POST("/register", h.register)
-	router.POST("/login", h.login)
+	router.POST("/sentinel/register", h.register)
+	router.POST("/sentinel/login", h.login)
 }
 
 func (h *Handler) SetupRoutes(router *gin.Engine) {
-	users := router.Group("/sentinal/api/users")
+	users := router.Group("/sentinel/api/users")
 	{
 		users.POST("/", h.CreateUser)
 		users.GET("/:id", h.GetUser)
@@ -50,7 +50,7 @@ func (h *Handler) SetupRoutes(router *gin.Engine) {
 		users.PUT("/:id/role", h.UpdateUserRole)
 		users.DELETE("/:id", h.DeleteUser)
 	}
-	agents := router.Group("/sentinal/api/agents")
+	agents := router.Group("/sentinel/api/agents")
 	{
 		agents.POST("/", h.CreateAgent)
 		agents.GET("/:id", h.GetAgentByID)
@@ -58,7 +58,7 @@ func (h *Handler) SetupRoutes(router *gin.Engine) {
 		agents.PUT("/:id/lastseen", h.UpdateLastSeen)
 		agents.DELETE("/:id", h.DeleteAgent)
 	}
-	logs := router.Group("/sentinal/api")
+	logs := router.Group("/sentinel/api")
 	{
 		logs.GET("/applogs/:id", h.GetAppLogByID)
 		logs.GET("/applogs", h.GetListAppLog)
@@ -67,7 +67,7 @@ func (h *Handler) SetupRoutes(router *gin.Engine) {
 		logs.GET("/metrics/:id", h.GetMetricsByID)
 		logs.GET("/metrics", h.ListMetrics)
 	}
-	alerts := router.Group("/sentinal/alerts")
+	alerts := router.Group("/sentinel/alerts")
 	{
 		alerts.GET("/:id", h.GetAlertByID)
 		alerts.GET("/", h.ListAlerts)

@@ -19,9 +19,9 @@ type createUserResponse struct {
 // @Accept json
 // @Produce json
 // @Param create body models.CreateUser true "Create User"
-// @Success 201 {object} createUserResponse 
+// @Success 201 {object} createUserResponse
 // @Failure 400,404,500 {object} ErrorResponse
-// @Router /sentinal/api/users [post]
+// @Router /sentinel/api/users [post]
 func (h *Handler) CreateUser(ctx *gin.Context) {
 	var body models.CreateUser
 	if err := ctx.ShouldBindJSON(&body); err != nil {
@@ -43,15 +43,15 @@ func (h *Handler) CreateUser(ctx *gin.Context) {
 	})
 }
 
-// @Description Get User 
-// @Summary Get User 
-// @Tags user 
-// @Accept json 
-// @Produce json 
+// @Description Get User
+// @Summary Get User
+// @Tags user
+// @Accept json
+// @Produce json
 // @Param id path string ture "user id"
 // @Success 200 {object} models.User
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/users/{id} [get] 
+// @Router /sentinel/api/users/{id} [get]
 func (h *Handler) GetUser(ctx *gin.Context) {
 	var paramValue = ctx.Param("id")
 	if paramValue == "" {
@@ -78,16 +78,16 @@ func (h *Handler) GetUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 
-// @Description Update User 
+// @Description Update User
 // @Summary Update User
-// @Tags user 
-// @Accept json 
-// @Produce json 
+// @Tags user
+// @Accept json
+// @Produce json
 // @Param id path string true "user id"
 // @Param update body models.UpdateUser true "update user"
 // @Success 200 {object} SuccessResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/users/{id} [put]
+// @Router /sentinel/api/users/{id} [put]
 func (h *Handler) UpdateUser(ctx *gin.Context) {
 	var req models.UpdateUser
 
@@ -127,14 +127,14 @@ func (h *Handler) UpdateUser(ctx *gin.Context) {
 
 // @Description Update User Role
 // @Summary Update User Role
-// @Tags user 
-// @Accept json 
-// @Produce json 
+// @Tags user
+// @Accept json
+// @Produce json
 // @Param id path string true "user id"
 // @Param update body models.UpdateRole true "update user role"
 // @Success 200 {object} SuccessResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/users/{id}/role [put]
+// @Router /sentinel/api/users/{id}/role [put]
 func (h *Handler) UpdateUserRole(ctx *gin.Context) {
 	var body models.UpdateRole
 
@@ -165,17 +165,21 @@ func (h *Handler) UpdateUserRole(ctx *gin.Context) {
 		errorResponse(ctx, http.StatusInternalServerError, err)
 		return
 	}
+
+	ctx.JSON(http.StatusOK, SuccessResponse{
+		Message: "User's role updated successfully",
+	})
 }
 
 // @Description Delete User
-// @Summary Delete User 
-// @Tags user 
-// @Accept json 
-// @Produce json 
+// @Summary Delete User
+// @Tags user
+// @Accept json
+// @Produce json
 // @Param id path string ture "user id"
 // @Success 200 {object} SuccessResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/users/{id} [delete]
+// @Router /sentinel/api/users/{id} [delete]
 func (h *Handler) DeleteUser(ctx *gin.Context) {
 	var paramValue = ctx.Param("id")
 	if paramValue == "" {

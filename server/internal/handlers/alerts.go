@@ -24,7 +24,7 @@ type alertListResponse struct {
 // @Param id path string true "alert id"
 // @Sucess 200 {object} models.Alert
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/alerts/{id} [get]
+// @Router /sentinel/api/alerts/{id} [get]
 func (h *Handler) GetAlertByID(ctx *gin.Context) {
 	paramValue := ctx.Param("id")
 	if paramValue == "" {
@@ -65,7 +65,7 @@ func (h *Handler) GetAlertByID(ctx *gin.Context) {
 // @Param page query int false "Page" default(1)
 // @Sucess 200 {object} nginxListResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/alerts [get]
+// @Router /sentinel/api/alerts [get]
 func (h *Handler) ListAlerts(ctx *gin.Context) {
 	var filter models.FilterAlert
 
@@ -107,7 +107,7 @@ func (h *Handler) ListAlerts(ctx *gin.Context) {
 // @Param mark_read body models.MarkAlertRead true "mark alert reaad"
 // @Success 200 {object} SuccessResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/alerts/{id}/markread [put]
+// @Router /sentinel/api/alerts/{id}/markread [put]
 func (h *Handler) MarkAlertRead(ctx *gin.Context) {
 	paramValue := ctx.Param("id")
 	if paramValue == "" {

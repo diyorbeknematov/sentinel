@@ -24,7 +24,7 @@ type nginxListResponse struct {
 // @Param id path string ture "nginx log id"
 // @Success 200 {object} models.NginxLog
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/nginxlogs/{id} [get]
+// @Router /sentinel/api/nginxlogs/{id} [get]
 func (h *Handler) GetNginxLogByID(ctx *gin.Context) {
 	paramValue := ctx.Param("id")
 	if paramValue == "" {
@@ -64,7 +64,7 @@ func (h *Handler) GetNginxLogByID(ctx *gin.Context) {
 // @Param page query int false "Page" default(1)
 // @Sucess 200 {object} nginxListResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinal/api/nginxlogs [get]
+// @Router /sentinel/api/nginxlogs [get]
 func (h *Handler) ListNginxLogs(ctx *gin.Context) {
 	var filter models.FilterNginxLog
 
