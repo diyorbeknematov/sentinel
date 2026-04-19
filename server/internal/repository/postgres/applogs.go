@@ -121,11 +121,6 @@ func (r *appLogRepo) ListLogs(filter models.FilterAppLog) ([]models.Log, int, er
 		params["type"] = "%" + filter.Level + "%"
 	}
 
-	if filter.IPAddress != "" {
-		conditions = append(conditions, "ip_address = :ipAddrss")
-		params["ipAddress"] = filter.IPAddress
-	}
-
 	if !filter.From.IsZero() {
 		conditions = append(conditions, "recorded_at >= :from")
 		params["from"] = filter.From

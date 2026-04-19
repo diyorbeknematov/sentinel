@@ -2,6 +2,7 @@ package service
 
 import (
 	"log/slog"
+	"time"
 
 	"github.com/diyorbek/sentinel/internal/config"
 	"github.com/diyorbek/sentinel/internal/models"
@@ -10,19 +11,40 @@ import (
 )
 
 type Service struct {
+	User
+	Authorization
 	Agent
 	Alert
 	AppLog
+	NginxLog
 	Metric
 }
 
 func NewService(repos *repository.Repository, cfg *config.Config, logger *slog.Logger) *Service {
 	return &Service{
-		Agent:  NewAgentService(repos, cfg, logger),
-		Alert:  NewAlertService(repos, cfg, logger),
-		AppLog: NewLogService(repos, cfg, logger),
-		Metric: NewMetricService(repos, cfg, logger),
+		User:          NewUserService(repos, cfg),
+		Authorization: NewAuthService(repos, cfg),
+		Agent:         NewAgentService(repos, cfg, logger),
+		Alert:         NewAlertService(repos, cfg, logger),
+		AppLog:        NewLogService(repos, cfg, logger),
+		Metric:        NewMetricService(repos, cfg, logger),
 	}
+}
+
+type User interface {
+	CreateUser(req models.CreateUser) (uuid.UUID, error)
+	GetUser(id uuid.UUID) (models.User, error)
+	UpdateUser(req models.UpdateUser) error
+	UpdateUserRole(req models.UpdateRole) error
+	DeleteUser(id uuid.UUID) error
+}
+
+type Authorization interface {
+	CreateToken(models.User, string, time.Time) (*models.Token, error)
+	GenerateTokens(models.User) (*models.Token, *models.Token, error)
+	ParseToken(string) (*jwtCustomClaim, error)
+	Login(models.Login) (*models.Token, *models.Token, error)
+	Register(models.Register) (*models.Token, *models.Token, error)
 }
 
 type Agent interface {
@@ -51,4 +73,10 @@ type Metric interface {
 	CreateMetric(metric models.CreateMetric) (uuid.UUID, error)
 	GetMetricsByID(id uuid.UUID) (models.Metric, error)
 	ListMetrics(filter models.FilterMetrics) ([]models.Metric, int, error)
+}
+
+type NginxLog interface {
+	CreateNginxLog(log models.CreateNginxLog) (uuid.UUID, error)
+	GetNginxLogByID(id uuid.UUID) (models.NginxLog, error)
+	ListNginxLogs(filter models.FilterNginxLog) ([]models.NginxLog, int, error)
 }

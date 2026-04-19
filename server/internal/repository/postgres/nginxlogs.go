@@ -110,11 +110,6 @@ func (r *nginxLogRepo) ListNginxLogs(filter models.FilterNginxLog) ([]models.Ngi
 		params["agentId"] = filter.AgentId
 	}
 
-	if filter.IPAddress != "" {
-		conditions = append(conditions, "ip_address = :ipAddrss")
-		params["ipAddress"] = filter.IPAddress
-	}
-
 	if filter.Method != "" {
 		conditions = append(conditions, "method = :method")
 		params["method"] = filter.Method

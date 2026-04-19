@@ -1,3 +1,11 @@
+-- users jadvali 
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50),
+    password TEXT,
+    role VARCHAR(20) -- admin, viewer
+);
+
 -- agents jadvali
 CREATE TABLE IF NOT EXISTS agents (
     id UUID PRIMARY KEY,

@@ -8,11 +8,11 @@ import (
 type ErrorCode string
 
 const (
-	ErrNotFound        ErrorCode = "NOT_FOUND"
-	ErrAlreadyExists   ErrorCode = "ALREADY_EXISTS"
-	ErrInvalidInput    ErrorCode = "INVALID_INPUT"
-	ErrInternal        ErrorCode = "INTERNAL"
-	EerrNoRowsAffected ErrorCode = "no rows affected"
+	ErrNotFound       ErrorCode = "NOT_FOUND"
+	ErrAlreadyExists  ErrorCode = "ALREADY_EXISTS"
+	ErrInvalidInput   ErrorCode = "INVALID_INPUT"
+	ErrInternal       ErrorCode = "INTERNAL"
+	ErrNoRowsAffected ErrorCode = "no rows affected"
 )
 
 type AppError struct {

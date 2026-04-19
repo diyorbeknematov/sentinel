@@ -62,7 +62,7 @@ func (s *alertService) ListAlerts(filter models.FilterAlert) ([]models.Alert, in
 func (s *alertService) MarkAlertRead(isRead models.MarkAlertRead) (err error) {
 	err = s.repo.Alert.MarkAlertRead(isRead)
 	if err != nil {
-		if apperrors.Is(err, apperrors.EerrNoRowsAffected) {
+		if apperrors.Is(err, apperrors.ErrNoRowsAffected) {
 			return apperrors.BadRequest("aler mavjud emas")
 		}
 		return apperrors.Internal(err)

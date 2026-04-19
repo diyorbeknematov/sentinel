@@ -34,7 +34,7 @@ func (s *agentService) CreateAgent(req models.CreateAgent) (uuid.UUID, error) {
 
 	req.APIKey = apiKey
 
-	id, err := s.repo.CreateAgent(req)
+	id, err := s.repo.Agent.CreateAgent(req)
 	if err != nil {
 		return uuid.Nil, apperrors.Internal(err)
 	}
@@ -84,7 +84,7 @@ func (s *agentService) ListAgents(filter models.FilterAgent) ([]models.Agent, in
 func (s *agentService) UpdateLastSeen(lastSeen models.UpdateLastSeen) error {
 	err := s.repo.Agent.UpdateLastSeen(lastSeen)
 	if err != nil {
-		if apperrors.Is(err, apperrors.EerrNoRowsAffected) {
+		if apperrors.Is(err, apperrors.ErrNoRowsAffected) {
 			return apperrors.BadRequest("bunday ma'lumotga ega agent yo'q")
 		}
 		return apperrors.Internal(err)
@@ -96,7 +96,7 @@ func (s *agentService) UpdateLastSeen(lastSeen models.UpdateLastSeen) error {
 func (s *agentService) DeleteAgent(id uuid.UUID) (err error) {
 	err = s.repo.Agent.DeleteAgent(id)
 	if err != nil {
-		if apperrors.Is(err, apperrors.EerrNoRowsAffected) {
+		if apperrors.Is(err, apperrors.ErrNoRowsAffected) {
 			return apperrors.BadRequest("bunday agent yo'q")
 		}
 

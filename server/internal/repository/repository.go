@@ -8,6 +8,7 @@ import (
 )
 
 type Repository struct {
+	User
 	Agent
 	Alert
 	AppLog
@@ -17,12 +18,22 @@ type Repository struct {
 
 func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{
+		User:     postgres.NewUserRepo(db),
 		Agent:    postgres.NewAgentRepo(db),
 		Alert:    postgres.NewAlertRepo(db),
 		AppLog:   postgres.NewAppLogRepo(db),
 		NginxLog: postgres.NewNGINXLogRepo(db),
 		Metric:   postgres.NewMetricRepo(db),
 	}
+}
+
+type User interface {
+	CreateUser(models.CreateUser) (uuid.UUID, error)
+	GetUserByUserName(string) (models.User, error)
+	GetUserByID(uuid.UUID) (models.User, error)
+	UpdateUser(models.UpdateUser) error
+	UpdateUserRole(models.UpdateRole) error
+	DeleteUser(uuid.UUID) error
 }
 
 type Agent interface {
@@ -53,4 +64,8 @@ type Metric interface {
 	ListMetrics(models.FilterMetrics) ([]models.Metric, int, error)
 }
 
-type NginxLog interface{}
+type NginxLog interface {
+	CreateNginxLog(log models.CreateNginxLog) (uuid.UUID, error)
+	GetNginxLogByID(id uuid.UUID) (models.NginxLog, error)
+	ListNginxLogs(filter models.FilterNginxLog) ([]models.NginxLog, int, error)
+}

@@ -29,7 +29,6 @@ type CreateNginxLog struct {
 
 type FilterNginxLog struct {
 	AgentId      uuid.UUID `json:"agent_id"`
-	IPAddress    string    `json:"ip_address"`
 	Method       string    `json:"method"`
 	Status       int       `json:"status"`
 	From         time.Time `json:"from"`

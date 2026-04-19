@@ -43,44 +43,6 @@ func (r *metricRepo) CreateMetric(metric models.CreateMetric) (uuid.UUID, error)
 	return id, nil
 }
 
-func (r *metricRepo) CreateMetricsBatch(metrics []models.CreateMetric) error {
-	tx, err := r.db.Begin()
-	if err != nil {
-		return err
-	}
-
-	query := `
-	INSERT INTO metrics (
-	id,
-	agent_id,
-	cpu, 
-	ram,
-	disk
-	) VALUES ($1, $2, $3, $4, $5);
-	`
-	for _, metric := range metrics {
-		id := uuid.New()
-
-		if _, err := tx.Exec(query,
-			id,
-			metric.AgentId,
-			metric.CPU,
-			metric.RAM,
-			metric.Disk,
-		); err != nil {
-
-			tx.Rollback()
-			return err
-		}
-	}
-
-	if err = tx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (r *metricRepo) GetMetricsByID(id uuid.UUID) (models.Metric, error) {
 	var metric models.Metric
 	query := `

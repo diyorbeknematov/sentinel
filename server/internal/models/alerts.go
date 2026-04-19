@@ -25,7 +25,7 @@ type CreateAlert struct {
 }
 
 type MarkAlertRead struct {
-	Id     uuid.UUID `json:"id" validate:"required"`
+	Id     uuid.UUID `json:"-"`
 	IsRead bool      `json:"is_read" validate:"required"`
 }
 

@@ -32,7 +32,6 @@ type FilterAppLog struct {
 	UserId    string    `json:"user_id"`
 	Type      string    `json:"type"`
 	Level     string    `json:"level"`
-	IPAddress string    `json:"ip_address"`
 	From      time.Time `json:"from"`
 	To        time.Time `json:"to"`
 

@@ -37,7 +37,7 @@ func (s *logService) CreateAppLog(log models.CreateAppLog) (uuid.UUID, error) {
 func (s *logService) GetLogByID(id uuid.UUID) (models.Log, error) {
 	log, err := s.repo.AppLog.GetLogByID(id)
 	if err != nil {
-		if apperrors.Is(err, apperrors.EerrNoRowsAffected) {
+		if apperrors.Is(err, apperrors.ErrNoRowsAffected) {
 			return models.Log{}, apperrors.NotFound("log topilmadi", err)
 		}
 		return models.Log{}, apperrors.Internal(err)
@@ -49,7 +49,7 @@ func (s *logService) GetLogByID(id uuid.UUID) (models.Log, error) {
 func (s *logService) ListLogs(filter models.FilterAppLog) ([]models.Log, int, error) {
 	logs, total, err := s.repo.AppLog.ListLogs(filter)
 	if err != nil {
-		if apperrors.Is(err, apperrors.EerrNoRowsAffected) {
+		if apperrors.Is(err, apperrors.ErrNoRowsAffected) {
 			return []models.Log{}, 0, apperrors.NotFound("log topilmadi", err)
 		}
 		return []models.Log{}, 0, apperrors.Internal(err)
