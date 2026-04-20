@@ -26,20 +26,20 @@ func (r *appLogRepo) CreateAppLog(log models.CreateAppLog) (uuid.UUID, error) {
 		id,
 		agent_id,
 		user_id,
-		type,
+		event,
 		level,
 		message,
-		ip_address
+		log_time
 	) VALUES ($1, $2, $3, $4, $5, $6)
 	`
 	if _, err := r.db.Exec(query,
 		id,
 		log.AgentId,
 		log.UserId,
-		log.Type,
+		log.Event,
 		log.Level,
 		log.Message,
-		log.IPAddress,
+		log.LogTime,
 	); err != nil {
 		return uuid.Nil, err
 	}
@@ -53,10 +53,10 @@ func (r *appLogRepo) GetLogByID(id uuid.UUID) (models.Log, error) {
 	SELECT
 		id,
 		agent_id,
-		type,
+		event,
 		level,
 		message,
-		ip_address,
+		log_time,
 		recorded_at
 	FROM applogs
 	WHER id = $1;
@@ -65,10 +65,10 @@ func (r *appLogRepo) GetLogByID(id uuid.UUID) (models.Log, error) {
 	if err := r.db.QueryRow(query, id).Scan(
 		&log.Id,
 		&log.AgentId,
-		&log.Type,
+		&log.Event,
 		&log.Level,
 		&log.Message,
-		&log.IPAddress,
+		&log.LogTime,
 		&log.RecordedAt,
 	); err != nil {
 		return models.Log{}, err
@@ -83,10 +83,10 @@ func (r *appLogRepo) ListLogs(filter models.FilterAppLog) ([]models.Log, int, er
 		id,
 		agent_id,
 		user_id,
-		type,
+		event,
 		level,
 		message,
-		ip_address,
+		log_time,
 		recorded_at
 	FROM applogs
 	WHERE TRUE 
@@ -111,9 +111,9 @@ func (r *appLogRepo) ListLogs(filter models.FilterAppLog) ([]models.Log, int, er
 		params["userId"] = filter.UserId
 	}
 
-	if filter.Type != "" {
+	if filter.Event != "" {
 		conditions = append(conditions, "type ILIKE :type")
-		params["type"] = "%" + filter.Type + "%"
+		params["type"] = "%" + filter.Event + "%"
 	}
 
 	if filter.Level != "" {
@@ -154,10 +154,10 @@ func (r *appLogRepo) ListLogs(filter models.FilterAppLog) ([]models.Log, int, er
 			&l.Id,
 			&l.AgentId,
 			&l.UserId,
-			&l.Type,
+			&l.Event,
 			&l.Level,
 			&l.Message,
-			&l.IPAddress,
+			&l.LogTime,
 			&l.RecordedAt,
 		); err != nil {
 

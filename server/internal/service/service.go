@@ -48,7 +48,7 @@ type Authorization interface {
 }
 
 type Agent interface {
-	CreateAgent(req models.CreateAgent) (uuid.UUID, error)
+	CreateAgent(req models.CreateAgent) (uuid.UUID, string, error)
 	GetAgentByID(id uuid.UUID) (models.Agent, error)
 	GetAgentByAPIKey(apiKey string) (models.Agent, error)
 	ListAgents(filter models.FilterAgent) ([]models.Agent, int, error)

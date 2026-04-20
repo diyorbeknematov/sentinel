@@ -11,6 +11,7 @@ import (
 
 type createAgentResponse struct {
 	Id     uuid.UUID `json:"id"`
+	APIKey string    `json:"api_key"`
 	Messge string    `json:"message"`
 }
 
@@ -25,7 +26,7 @@ type agentListResponse struct {
 // @Summary Create Agent
 // @Tags agents
 // @Accept json
-// @Produce json 
+// @Produce json
 // @Param create body models.CreateAgent true "Create Agent"
 // @Success 201 {object} createAgentResponse
 // @Failure 400,404,500 {object} ErrorResponse
@@ -39,7 +40,7 @@ func (h *Handler) CreateAgent(ctx *gin.Context) {
 		return
 	}
 
-	id, err := h.service.Agent.CreateAgent(body)
+	id, apiKey, err := h.service.Agent.CreateAgent(body)
 	if err != nil {
 		h.logger.Error(err.Error())
 		errorResponse(ctx, http.StatusInternalServerError, err)
@@ -49,15 +50,16 @@ func (h *Handler) CreateAgent(ctx *gin.Context) {
 	h.logger.Info("Agent created successfully (create agent)")
 	ctx.JSON(http.StatusCreated, createAgentResponse{
 		Id:     id,
+		APIKey: apiKey,
 		Messge: "agent created successfully",
 	})
 }
 
-// @Description Get Agent by id 
-// @Summary Get Agent by id 
+// @Description Get Agent by id
+// @Summary Get Agent by id
 // @Tags agents
-// @Accept json 
-// @Produce json 
+// @Accept json
+// @Produce json
 // @Param id path string true "agent id"
 // @Success 200 {object} models.Agent
 // @Failure 400,401,404,500 {object} ErrorResponse
@@ -87,7 +89,7 @@ func (h *Handler) GetAgentByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, agent)
 }
 
-// @Description Retrieve a paginated list of agents 
+// @Description Retrieve a paginated list of agents
 // @Summary Get list of agents
 // @Tags agents
 // @Accept json
@@ -137,7 +139,7 @@ func (h *Handler) ListAgents(ctx *gin.Context) {
 // @Summary Update Last Seen
 // @Tags agents
 // @Accept json
-// @Produce json 
+// @Produce json
 // @Param id path string true "agent id"
 // @Param update body models.UpdateLastSeen true "update last seen"
 // @Success 200 {object} SuccessResponse
@@ -180,9 +182,9 @@ func (h *Handler) UpdateLastSeen(ctx *gin.Context) {
 
 // @Description Delete Agent
 // @Summary Delete Agent
-// @Tags agents 
-// @Accept json 
-// @Produce json 
+// @Tags agents
+// @Accept json
+// @Produce json
 // @Param id path string true "agent id"
 // @Success 200 {object} SuccessResponse
 // @Failure 400,401,404,500 {object} ErrorResponse

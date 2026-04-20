@@ -29,7 +29,9 @@ func (r *nginxLogRepo) CreateNginxLog(log models.CreateNginxLog) (uuid.UUID, err
 		method,
 		path,
 		status,
-		response_time
+		bytes,
+		user_agent,
+		log_time
 	) VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 
@@ -40,7 +42,9 @@ func (r *nginxLogRepo) CreateNginxLog(log models.CreateNginxLog) (uuid.UUID, err
 		log.Method,
 		log.Path,
 		log.Status,
-		log.ResponseTime,
+		log.Bytes,
+		log.UserAgent,
+		log.LogTime,
 	); err != nil {
 		return uuid.Nil, err
 	}
@@ -59,7 +63,9 @@ func (r *nginxLogRepo) GetNginxLogByID(id uuid.UUID) (models.NginxLog, error) {
 		method,
 		path,
 		status,
-		response_time,
+		bytes,
+		user_agent,
+		log_time,
 		recorded_at
 	FROM nginxlogs
 	WHERE id = $1
@@ -72,7 +78,9 @@ func (r *nginxLogRepo) GetNginxLogByID(id uuid.UUID) (models.NginxLog, error) {
 		&log.Method,
 		&log.Path,
 		&log.Status,
-		&log.ResponseTime,
+		&log.Bytes,
+		&log.UserAgent,
+		&log.LogTime,
 		&log.RecordedAt,
 	); err != nil {
 		return models.NginxLog{}, err
@@ -90,7 +98,9 @@ func (r *nginxLogRepo) ListNginxLogs(filter models.FilterNginxLog) ([]models.Ngi
 		method,
 		path,
 		status,
-		response_time,
+		bytes,
+		user_agent,
+		log_time,
 		recorded_at
 	FROM nginxlogs
 	WHERE TRUE 
@@ -156,7 +166,9 @@ func (r *nginxLogRepo) ListNginxLogs(filter models.FilterNginxLog) ([]models.Ngi
 			&l.Method,
 			&l.Path,
 			&l.Status,
-			&l.ResponseTime,
+			&l.Bytes,
+			&l.UserAgent,
+			&l.LogTime,
 			&l.RecordedAt,
 		); err != nil {
 			return nil, 0, err

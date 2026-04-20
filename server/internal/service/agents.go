@@ -26,20 +26,20 @@ func NewAgentService(repo *repository.Repository, cfg *config.Config, logger *sl
 	}
 }
 
-func (s *agentService) CreateAgent(req models.CreateAgent) (uuid.UUID, error) {
+func (s *agentService) CreateAgent(req models.CreateAgent) (uuid.UUID, string, error) {
 	apiKey, err := generateAPIKey()
 	if err != nil {
-		return uuid.Nil, apperrors.Internal(err)
+		return uuid.Nil, "", apperrors.Internal(err)
 	}
 
 	req.APIKey = apiKey
 
 	id, err := s.repo.Agent.CreateAgent(req)
 	if err != nil {
-		return uuid.Nil, apperrors.Internal(err)
+		return uuid.Nil, "", apperrors.Internal(err)
 	}
 
-	return id, nil
+	return id, apiKey, nil
 }
 
 func (s *agentService) GetAgentByID(id uuid.UUID) (models.Agent, error) {

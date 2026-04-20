@@ -30,14 +30,13 @@ var sqlPatterns = []string{
 	"/*",
 }
 
-
 func analyzeAppLog(log *models.Log) *AnalyzeRes {
 	// 1. Brute Force
 	if checkBruteForce(log) {
 		return &AnalyzeRes{
 			ThreatType: "BRUTE_FORCE",
 			Severity:   "CRITICAL",
-			Message:    "IP: " + log.IPAddress + " 1 daqiqada 10+ marta login urinish",
+			Message:    "user id: " + log.UserId + " 1 daqiqada 10+ marta login urinish",
 		}
 	}
 
@@ -46,7 +45,7 @@ func analyzeAppLog(log *models.Log) *AnalyzeRes {
 		return &AnalyzeRes{
 			ThreatType: "SQL_INJECTION",
 			Severity:   "CRITICAL",
-			Message:    "IP: " + log.IPAddress + " xavfli so'rov: " + log.Message,
+			Message:    "user id: " + log.UserId + " xavfli so'rov: " + log.Message,
 		}
 	}
 
@@ -65,25 +64,25 @@ func analyzeAppLog(log *models.Log) *AnalyzeRes {
 // 1. BRUTE FORCE
 // 1 daqiqada 10+ login_failed — bir IP dan
 func checkBruteForce(log *models.Log) bool {
-	if log.Type != "login_failed" {
+	if log.Event != "login_failed" {
 		return false
 	}
 
 	now := time.Now()
-	ip := log.IPAddress
+	userId := log.UserId
 
-	failedLogins[ip] = append(failedLogins[ip], now)
+	failedLogins[userId] = append(failedLogins[userId], now)
 
 	var recent []time.Time
-	for _, t := range failedLogins[ip] {
+	for _, t := range failedLogins[userId] {
 		if now.Sub(t) <= time.Minute {
 			recent = append(recent, t)
 		}
 	}
-	failedLogins[ip] = recent
+	failedLogins[userId] = recent
 
 	// 10+ bo'lsa Brute Force
-	return len(failedLogins[ip]) >= 10
+	return len(failedLogins[userId]) >= 10
 }
 
 // 2. SQL INJECTION

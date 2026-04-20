@@ -7,13 +7,15 @@ import (
 )
 
 type NginxLog struct {
-	Id           uuid.UUID `json:"id"`
-	IPAddress    string    `json:"ip_address"`
-	Method       string    `json:"method"`
-	Path         string    `json:"path"`
-	Status       int       `json:"status"`
-	ResponseTime int       `json:"response_time"`
-	RecordedAt   time.Time `json:"recorded_at"`
+	Id         uuid.UUID `json:"id"`
+	IPAddress  string    `json:"ip_address"`
+	Method     string    `json:"method"`
+	Path       string    `json:"path"`
+	Status     int       `json:"status"`
+	Bytes      int       `json:"bytes"`
+	UserAgent  string    `json:"user_agent"`
+	LogTime    time.Time `json:"log_time"`
+	RecordedAt time.Time `json:"recorded_at"`
 
 	AgentId uuid.UUID `json:"agent_id"`
 }
@@ -24,15 +26,17 @@ type CreateNginxLog struct {
 	Method       string    `json:"method"`
 	Path         string    `json:"path"`
 	Status       int       `json:"status"`
-	ResponseTime int       `json:"response_time"`
+	Bytes      int       `json:"bytes"`
+	UserAgent  string    `json:"user_agent"`
+	LogTime    time.Time `json:"log_time"`
 }
 
 type FilterNginxLog struct {
-	AgentId      uuid.UUID `json:"agent_id"`
-	Method       string    `json:"method"`
-	Status       int       `json:"status"`
-	From         time.Time `json:"from"`
-	To           time.Time `json:"to"`
+	AgentId uuid.UUID `json:"agent_id"`
+	Method  string    `json:"method"`
+	Status  int       `json:"status"`
+	From    time.Time `json:"from"`
+	To      time.Time `json:"to"`
 
 	Limit  int `json:"limit"`
 	Offset int `json:"offset"`

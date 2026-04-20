@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS metrics (
     cpu NUMERIC(5,2),
     ram NUMERIC(5,2),
     disk NUMERIC(5,2),
+
+    log_time TIMESTAMP,  -- app event time
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_metrics_agent
@@ -37,10 +39,11 @@ CREATE TABLE applogs (
     agent_id UUID NOT NULL,
 
     user_id VARCHAR(50),
-    type VARCHAR(50),     -- login_failed, login_success
+    event VARCHAR(50),     -- login_failed, login_success
     level VARCHAR(20),     -- INFO, WARN, ERROR
     message TEXT,
-    ip_address INET,   
+
+    log_time TIMESTAMP,  -- app event time
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (agent_id)
@@ -52,11 +55,15 @@ CREATE TABLE applogs (
 CREATE TABLE nginxlogs (
     id UUID PRIMARY KEY,
     agent_id UUID NOT NULL,
+
     ip_address INET,
     method VARCHAR(10),     -- GET, POST
     path TEXT,
     status INT,             -- 200, 404, 500
-    response_time INT,
+    bytes INT,
+    user_agent TEXT
+
+    log_time TIMESTAMP,  -- nginx event time
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (agent_id)

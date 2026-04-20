@@ -35,12 +35,12 @@ func (la *LogAnalyzer) ProcessAppLog(log *models.Log) {
 	}
 
 	_, err := la.Service.AppLog.CreateAppLog(models.CreateAppLog{
-		AgentId:   log.AgentId,
-		UserId:    log.UserId,
-		Type:      *threatType,
-		Level:     log.Level,
-		Message:   log.Message,
-		IPAddress: log.IPAddress,
+		AgentId: log.AgentId,
+		UserId:  log.UserId,
+		Event:   *threatType,
+		Level:   log.Level,
+		Message: log.Message,
+		LogTime: log.LogTime,
 	})
 
 	if err != nil {
