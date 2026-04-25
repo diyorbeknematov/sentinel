@@ -12,55 +12,37 @@ var (
 	notFoundCounts = make(map[string][]time.Time) // ip → vaqtlar (404)
 )
 
-func analyzeNginxLog(log *models.NginxLog) *AnalyzeRes {
+func (la *LogAnalyzer) AnalyzeNginxLog(log *models.NginxLog) *AnalyzeRes {
+	if r := la.checkDDoS(log); r != nil {
+		return r
+	}
+	if r := la.checkDangerousPath(log); r != nil {
+		return r
+	}
+	if r := la.check404Scanning(log); r != nil {
+		return r
+	}
+	return nil
+}
 
-	// 1. DDoS
-	if checkDDoS(log) {
+// 1. DDoS
+// 1 daqiqada 1 IP dan 100+ request
+func (la *LogAnalyzer) checkDDoS(log *models.NginxLog) *AnalyzeRes {
+	la.mu.Lock()
+	defer la.mu.Unlock()
+
+	now := time.Now()
+	la.requestCounts[log.IPAddress] = append(la.requestCounts[log.IPAddress], now)
+	la.requestCounts[log.IPAddress] = filterRecent(la.requestCounts[log.IPAddress], time.Minute)
+
+	if len(la.requestCounts[log.IPAddress]) >= 100 {
 		return &AnalyzeRes{
 			ThreatType: "DDOS",
 			Severity:   "CRITICAL",
 			Message:    "IP: " + log.IPAddress + " 1 daqiqada 100+ request",
 		}
 	}
-
-	// 2. Xavfli URL
-	if checkDangerousPath(log) {
-		return &AnalyzeRes{
-			ThreatType: "DANGEROUS_PATH",
-			Severity:   "HIGH",
-			Message:    "IP: " + log.IPAddress + " xavfli sahifaga kirdi: " + log.Path,
-		}
-	}
-
-	// 3. 404 Scanning
-	if check404Scanning(log) {
-		return &AnalyzeRes{
-			ThreatType: "SCANNING",
-			Severity:   "MEDIUM",
-			Message:    "IP: " + log.IPAddress + " tizimni paypaslamoqda",
-		}
-	}
-
 	return nil
-}
-
-// 1. DDoS
-// 1 daqiqada 1 IP dan 100+ request
-func checkDDoS(log *models.NginxLog) bool {
-	now := time.Now()
-	ip := log.IPAddress
-
-	requestCounts[ip] = append(requestCounts[ip], now)
-
-	var recent []time.Time
-	for _, t := range requestCounts[ip] {
-		if now.Sub(t) <= 1*time.Minute {
-			recent = append(recent, t)
-		}
-	}
-	requestCounts[ip] = recent
-
-	return len(requestCounts[ip]) >= 100
 }
 
 // 2. XAVFLI URL
@@ -74,35 +56,40 @@ var dangerousPaths = []string{
 	"/.git",
 }
 
-func checkDangerousPath(log *models.NginxLog) bool {
+func (la *LogAnalyzer) checkDangerousPath(log *models.NginxLog) *AnalyzeRes {
 	pathLower := strings.ToLower(log.Path)
 	for _, p := range dangerousPaths {
 		if strings.HasPrefix(pathLower, p) {
-			return true
+			return &AnalyzeRes{
+				ThreatType: "DANGEROUS_PATH",
+				Severity:   "HIGH",
+				Message:    "IP: " + log.IPAddress + " xavfli sahifaga kirdi: " + log.Path,
+			}
 		}
 	}
-	return false
+	return nil
 }
 
 // 3. 404 SCANNING
 // 1 IP dan 1 daqiqada 20+ 404
-func check404Scanning(log *models.NginxLog) bool {
+func (la *LogAnalyzer) check404Scanning(log *models.NginxLog) *AnalyzeRes {
 	if log.Status != 404 {
-		return false
+		return nil
 	}
+
+	la.mu.Lock()
+	defer la.mu.Unlock()
 
 	now := time.Now()
-	ip := log.IPAddress
+	la.notFoundCounts[log.IPAddress] = append(la.notFoundCounts[log.IPAddress], now)
+	la.notFoundCounts[log.IPAddress] = filterRecent(la.notFoundCounts[log.IPAddress], time.Minute)
 
-	notFoundCounts[ip] = append(notFoundCounts[ip], now)
-
-	var recent []time.Time
-	for _, t := range notFoundCounts[ip] {
-		if now.Sub(t) <= 1*time.Minute {
-			recent = append(recent, t)
+	if len(la.notFoundCounts[log.IPAddress]) >= 20 {
+		return &AnalyzeRes{
+			ThreatType: "SCANNING",
+			Severity:   "MEDIUM",
+			Message:    "IP: " + log.IPAddress + " tizimni paypaslamoqda",
 		}
 	}
-	notFoundCounts[ip] = recent
-
-	return len(notFoundCounts[ip]) >= 20
+	return nil
 }

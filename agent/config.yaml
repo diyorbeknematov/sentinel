@@ -4,3 +4,11 @@ server:
 
 agent:
   name: my-agent
+
+agent_id: "server-prod-01"
+app_log: /var/log/myapp/app.log
+nginx_log: /var/log/nginx/access.log
+metrics_interval: 5s
+kafka_brokers:
+  - localhost:9092
+kafka_topic: sentinel-events

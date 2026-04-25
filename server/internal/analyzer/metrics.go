@@ -6,7 +6,7 @@ import (
 	"github.com/diyorbek/sentinel/internal/models"
 )
 
-func analyzeMetric(metric *models.Metric) []*AnalyzeRes {
+func (la *LogAnalyzer) AnalyzeMetric(metric *models.Metric) []*AnalyzeRes {
 	var results []*AnalyzeRes
 
 	// Hammasi bir vaqtda xavfli bo'lishi mumkin
@@ -24,7 +24,7 @@ func analyzeMetric(metric *models.Metric) []*AnalyzeRes {
 	return results
 }
 
-func checkCPU(metric *models.Metric) *AnalyzeRes {
+func  checkCPU(metric *models.Metric) *AnalyzeRes {
 	if metric.CPU > 90 {
 		return &AnalyzeRes{
 			ThreatType: "HIGH_CPU",

@@ -1,40 +1,48 @@
 package config
 
 import (
-	"log"
-	"os"
+    "fmt"
+    "os"
+    "time"
 
-	"gopkg.in/yaml.v3"
+    "gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	AppLog   string `yaml:"app_log"`
-	NginxLog string `yaml:"nginx_log"`
+    AgentID         string        `yaml:"agent_id"`
+    AppLog          string        `yaml:"app_log"`
+    NginxLog        string        `yaml:"nginx_log"`
+    MetricsInterval time.Duration `yaml:"metrics_interval"`
+    KafkaBrokers    []string      `yaml:"kafka_brokers"`
+    KafkaTopic      string        `yaml:"kafka_topic"`
 }
 
-func Load() *Config {
-	file, err := os.Open("config.yaml")
-	if err != nil {
-		log.Fatal("config.yaml not found:", err)
-	}
-	defer file.Close()
+func Load(path string) (*Config, error) {
+    data, err := os.ReadFile(path)
+    if err != nil {
+        return nil, fmt.Errorf("read config: %w", err)
+    }
 
-	cfg := &Config{}
+    var cfg Config
+    if err := yaml.Unmarshal(data, &cfg); err != nil {
+        return nil, fmt.Errorf("parse config: %w", err)
+    }
 
-	decoder := yaml.NewDecoder(file)
-	err = decoder.Decode(cfg)
-	if err != nil {
-		log.Fatal("failed to parse yaml:", err)
-	}
-
-	return cfg
+    return &cfg, cfg.validate()
 }
 
-func coalesce(env string, defaultValue interface{}) interface{} {
-	value, exists := os.LookupEnv(env)
-	if !exists {
-		return defaultValue
-	}
-
-	return value
+func (c *Config) validate() error {
+    if c.AgentID == "" {
+        return fmt.Errorf("agent_id is required")
+    }
+    if len(c.KafkaBrokers) == 0 {
+        return fmt.Errorf("kafka_brokers is required")
+    }
+    if c.KafkaTopic == "" {
+        return fmt.Errorf("kafka_topic is required")
+    }
+    if c.MetricsInterval <= 0 {
+        c.MetricsInterval = 5 * time.Second
+    }
+    return nil
 }

@@ -1,16 +1,12 @@
 package analyzer
 
 import (
-	"log/slog"
+	"context"
+	"sync"
+	"time"
 
-	"github.com/diyorbek/sentinel/internal/models"
-	"github.com/diyorbek/sentinel/internal/service"
+	"github.com/google/uuid"
 )
-
-type LogAnalyzer struct {
-	Service *service.Service
-	logger  *slog.Logger
-}
 
 type AnalyzeRes struct {
 	ThreatType string
@@ -18,86 +14,59 @@ type AnalyzeRes struct {
 	Message    string
 }
 
-func NewLogAnalyzer(service *service.Service, logger *slog.Logger) *LogAnalyzer {
+type LogAnalyzer struct {
+	mu sync.Mutex // barcha map'lar uchun bitta mutex yetarli
+
+	// AppLog uchun
+	failedLogins map[string][]time.Time
+	errorCounts  map[uuid.UUID][]time.Time
+
+	// NginxLog uchun
+	requestCounts  map[string][]time.Time
+	notFoundCounts map[string][]time.Time
+}
+
+func NewLogAnalyzer() *LogAnalyzer {
 	return &LogAnalyzer{
-		Service: service,
-		logger:  logger,
+		failedLogins:   make(map[string][]time.Time),
+		errorCounts:    make(map[uuid.UUID][]time.Time),
+		requestCounts:  make(map[string][]time.Time),
+		notFoundCounts: make(map[string][]time.Time),
 	}
 }
 
-func (la *LogAnalyzer) ProcessAppLog(log *models.Log) {
-	res := analyzeAppLog(log)
-
-	// 2. AppLog ga saqlash
-	var threatType *string
-	if res != nil {
-		threatType = &res.ThreatType
-	}
-
-	_, err := la.Service.AppLog.CreateAppLog(models.CreateAppLog{
-		AgentId: log.AgentId,
-		UserId:  log.UserId,
-		Event:   *threatType,
-		Level:   log.Level,
-		Message: log.Message,
-		LogTime: log.LogTime,
-	})
-
-	if err != nil {
-		la.logger.Error(err.Error())
-		panic(err)
-	}
-
-	if res != nil {
-		_, err = la.Service.Alert.CreateAlert(models.CreateAlert{
-			AgentId:  log.AgentId,
-			Type:     res.ThreatType,
-			Message:  res.Message,
-			Severity: res.Severity,
-		})
-		if err != nil {
-			la.logger.Error(err.Error())
-			panic(err)
+func (la *LogAnalyzer) StartCleanup(ctx context.Context) {
+	ticker := time.NewTicker(10 * time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			la.mu.Lock()
+			// bo'sh bo'lgan keylarni o'chiramiz
+			for k, v := range la.failedLogins {
+				if len(filterRecent(v, time.Minute)) == 0 {
+					delete(la.failedLogins, k)
+				}
+			}
+			for k, v := range la.requestCounts {
+				if len(filterRecent(v, time.Minute)) == 0 {
+					delete(la.requestCounts, k)
+				}
+			}
+			la.mu.Unlock()
 		}
 	}
 }
 
-func (la *LogAnalyzer) ProcessNginxLog(log *models.NginxLog) {
-	_ = analyzeNginxLog(log)
-
-	// 2. nginxlogs ga saqlash
-	// var threatType *string
-	// if res != nil {
-	// 	threatType = &res.ThreatType
-	// }
-
-}
-
-func (la *LogAnalyzer) ProcessMetric(metric *models.Metric) {
-	_, err := la.Service.Metric.CreateMetric(models.CreateMetric{
-		AgentId: metric.AgentId,
-		CPU:     metric.CPU,
-		RAM:     metric.RAM,
-		Disk:    metric.Disk,
-	})
-
-	if err != nil {
-		la.logger.Error(err.Error())
-		panic(err)
-	}
-
-	results := analyzeMetric(metric)
-	for _, res := range results {
-		_, err = la.Service.Alert.CreateAlert(models.CreateAlert{
-			AgentId:  metric.AgentId,
-			Type:     res.ThreatType,
-			Message:  res.Message,
-			Severity: res.Severity,
-		})
-
-		if err != nil {
-			la.logger.Error(err.Error())
-			panic(err)
+func filterRecent(times []time.Time, window time.Duration) []time.Time {
+	now := time.Now()
+	var recent []time.Time
+	for _, t := range times {
+		if now.Sub(t) <= window {
+			recent = append(recent, t)
 		}
 	}
+	return recent
 }
