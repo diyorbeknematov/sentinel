@@ -46,7 +46,7 @@ func (s *authService) CreateToken(user models.User, tokenType string, expiresAt 
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	token, err := jwtToken.SignedString([]byte(s.cfg.ACCESS_TOKEN))
+	token, err := jwtToken.SignedString([]byte(s.cfg.AccessToken))
 	if err != nil {
 		fmt.Println("Xatolik shu yerda")
 		return nil, apperrors.Internal(err)
@@ -82,7 +82,7 @@ func (s *authService) ParseToken(token string) (*jwtCustomClaim, error) {
 			return nil, errors.New("invalid signing method")
 		}
 
-		return []byte(s.cfg.ACCESS_TOKEN), nil
+		return []byte(s.cfg.AccessToken), nil
 	})
 	if err != nil {
 		return nil, err

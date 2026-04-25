@@ -61,7 +61,7 @@ CREATE TABLE nginxlogs (
     path TEXT,
     status INT,             -- 200, 404, 500
     bytes INT,
-    user_agent TEXT
+    user_agent TEXT,
 
     log_time TIMESTAMP,  -- nginx event time
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

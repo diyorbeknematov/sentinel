@@ -22,7 +22,7 @@ func (r *metricRepo) CreateMetric(metric models.CreateMetric) (uuid.UUID, error)
 	id := uuid.New()
 
 	query := `
-	INERT INTO metrics (
+	INSERT INTO metrics (
 		id,
 		agent_id,
 		cpu,

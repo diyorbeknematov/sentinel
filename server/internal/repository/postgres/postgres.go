@@ -14,7 +14,7 @@ func DBConnection() (*sqlx.DB, error) {
 	cfg := config.Load()
 
 	conn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-		cfg.DB_HOST, cfg.DB_PORT, cfg.DB_USER, cfg.DB_NAME, cfg.DB_PASSWORD)
+		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBName, cfg.DBPassword)
 
 	db, err := sqlx.Open("postgres", conn)
 	if err != nil {

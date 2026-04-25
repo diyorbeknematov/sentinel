@@ -3,21 +3,26 @@ package config
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/cast"
 )
 
 type Config struct {
-	HTTP_PORT        string
-	DB_HOST          string
-	DB_NAME          string
-	DB_PORT          string
-	DB_USER          string
-	DB_PASSWORD      string
-	DB_CASBIN_DRIVER string
-	ACCESS_TOKEN     string
-	REFRESH_TOKEN    string
+	HTTPPort     string
+	DBHost       string
+	DBName       string
+	DBPort       string
+	DBUser       string
+	DBPassword   string
+	CasbinDriver string
+	AccessToken  string
+	RefreshToken string
+
+	KafkaBrokers []string
+	KafkaTopic   string
+	KafkaGroupID string
 }
 
 func Load() *Config {
@@ -26,24 +31,27 @@ func Load() *Config {
 		log.Println("No .env file found")
 	}
 
-	cfg := &Config{}
+	return &Config{
+		HTTPPort:     getEnv("HTTP_PORT", "8081"),
+		DBHost:       getEnv("DB_HOST", "localhost"),
+		DBPort:       getEnv("DB_PORT", "5432"),
+		DBName:       getEnv("DB_NAME", ""),
+		DBUser:       getEnv("DB_USER", "postgres"),
+		DBPassword:   getEnv("DB_PASSWORD", "password"),
+		CasbinDriver: getEnv("DB_CASBIN_DRIVER", "postgres"),
+		AccessToken:  getEnv("ACCESS_TOKEN", "key"),
+		RefreshToken: getEnv("REFRESH_TOKEN", "key"),
 
-	cfg.HTTP_PORT = cast.ToString(coalesce("HTTP_PORT", "8081"))
-	cfg.DB_HOST = cast.ToString(coalesce("DB_HOST", "localhost"))
-	cfg.DB_PORT = cast.ToString(coalesce("DB_PORT", 5432))
-	cfg.DB_NAME = cast.ToString(coalesce("DB_NAME", ""))
-	cfg.DB_USER = cast.ToString(coalesce("DB_USER", "postgres"))
-	cfg.DB_PASSWORD = cast.ToString(coalesce("DB_PASSWORD", "password"))
-	cfg.ACCESS_TOKEN = cast.ToString(coalesce("ACCESS_TOKEN", "key"))
-	cfg.REFRESH_TOKEN = cast.ToString(coalesce("REFRESH_TOKEN", "key"))
-
-	return cfg
+		KafkaBrokers: strings.Split(getEnv("KAFKA_BROKERS", "localhost:9092"), ","),
+		KafkaTopic:   getEnv("KAFKA_TOPIC", "test-topic"),
+		KafkaGroupID: getEnv("KAFKA_GROUP_ID", "test-group"),
+	}
 }
 
-func coalesce(env string, defaultValue interface{}) interface{} {
-	value, exists := os.LookupEnv(env)
+func getEnv(key string, defaultValue interface{}) string {
+	val, exists := os.LookupEnv(key)
 	if !exists {
-		return defaultValue
+		return cast.ToString(defaultValue)
 	}
-	return value
+	return val
 }

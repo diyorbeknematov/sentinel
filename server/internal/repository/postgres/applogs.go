@@ -22,7 +22,7 @@ func (r *appLogRepo) CreateAppLog(log models.CreateAppLog) (uuid.UUID, error) {
 	id := uuid.New()
 
 	query := `
-	INERT INTO applogs (
+	INSERT INTO applogs (
 		id,
 		agent_id,
 		user_id,

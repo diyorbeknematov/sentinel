@@ -19,3 +19,11 @@
 {"time":"2026-04-19T23:49:40.29452731+05:00","level":"WARN","msg":"invalid UUID length: 5"}
 {"time":"2026-04-19T23:53:00.744273886+05:00","level":"WARN","msg":"invalid UUID length: 5"}
 {"time":"2026-04-19T23:54:10.965343829+05:00","level":"WARN","msg":"invalid UUID length: 5"}
+{"time":"2026-04-25T15:08:42.559448083+05:00","level":"INFO","msg":"server started","addr":":8080"}
+{"time":"2026-04-25T15:08:42.559459636+05:00","level":"INFO","msg":"consumer started ..."}
+{"time":"2026-04-25T15:10:20.42971222+05:00","level":"INFO","msg":"consumer started ..."}
+{"time":"2026-04-25T15:10:20.429709875+05:00","level":"INFO","msg":"server started","addr":":8080"}
+{"time":"2026-04-25T15:29:16.368080982+05:00","level":"INFO","msg":"consumer started ..."}
+{"time":"2026-04-25T15:29:16.368088195+05:00","level":"INFO","msg":"server started","addr":":8080"}
+{"time":"2026-04-25T15:29:54.240280694+05:00","level":"INFO","msg":"consumer started ..."}
+{"time":"2026-04-25T15:29:54.240286695+05:00","level":"INFO","msg":"server started","addr":":8080"}

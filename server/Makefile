@@ -14,7 +14,7 @@ mig-force:
 	migrate -path internal/migrations -database '${DB_URL}' -verbose force 1
 
 mig-create-tables:
-	migrate create -ext sql -dir internal/migrations -seq DB_NAME
+	migrate create -ext sql -dir ./migrations -seq DB_NAME
 
 swag-gen:
 	~/go/bin/swag init -g cmd/main.go -o internal/handlers/docs

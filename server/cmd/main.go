@@ -42,7 +42,7 @@ func main() {
 
 	// Consumer — goroutine'da
 	go func() {
-		if err := a.RunKafka(ctx); err != nil {
+		if err := a.RunKafkaConsumer(ctx); err != nil {
 			log.Fatal(err)
 		}
 	}()

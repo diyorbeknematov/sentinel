@@ -10,6 +10,7 @@ import (
 	"github.com/diyorbek/sentinel/internal/analyzer"
 	"github.com/diyorbek/sentinel/internal/config"
 	"github.com/diyorbek/sentinel/internal/consumer"
+	"github.com/diyorbek/sentinel/internal/event"
 	"github.com/diyorbek/sentinel/internal/handlers"
 	"github.com/diyorbek/sentinel/internal/repository"
 	"github.com/diyorbek/sentinel/internal/repository/postgres"
@@ -31,9 +32,15 @@ func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 
 	repos := repository.NewRepository(db)
 	svc := service.NewService(repos, cfg, log)
-	handler := handlers.NewHandler(svc, log)
 
+	// HTTP
+	handler := handlers.NewHandler(svc, log)
 	router := handler.InitRoutes(cfg)
+
+	// Kafka consumer
+	anlzr := analyzer.NewLogAnalyzer()
+	evHandler := event.NewEventHanler(svc, anlzr, log)
+	c := consumer.New(cfg.KafkaBrokers, cfg.KafkaTopic, cfg.KafkaGroupID, evHandler, log)
 
 	return &App{
 		server: &http.Server{
@@ -42,7 +49,9 @@ func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 			ReadTimeout:  10 * time.Second,
 			WriteTimeout: 10 * time.Second,
 		},
-		logger: log,
+		consumer: c,
+		analyzer: anlzr,
+		logger:   log,
 	}, nil
 }
 
@@ -51,7 +60,7 @@ func (a *App) RunHTTP() error {
 	return a.server.ListenAndServe()
 }
 
-func (a *App) RunKafka(ctx context.Context) error {
+func (a *App) RunKafkaConsumer(ctx context.Context) error {
 	a.logger.Info("consumer started ...")
 	go a.analyzer.StartCleanup(ctx)
 	return a.consumer.Run(ctx)

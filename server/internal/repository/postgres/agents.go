@@ -28,13 +28,12 @@ func (r *agentRepo) CreateAgent(agent models.CreateAgent) (uuid.UUID, error) {
 	id := uuid.New()
 
 	query := `
-		INERT INTO agents (
+		INSERT INTO agents (
 		id,
 		name,
 		api_key,
 		ip_address,
 		last_seen
-
 		) VALUES ($1, $2, $3, $4, $5);
 	`
 
