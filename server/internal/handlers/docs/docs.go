@@ -1377,6 +1377,9 @@ const docTemplate = `{
         "handlers.createAgentResponse": {
             "type": "object",
             "properties": {
+                "api_key": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -1464,22 +1467,22 @@ const docTemplate = `{
                 "agent_id": {
                     "type": "string"
                 },
+                "event": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
-                "ip_address": {
+                "level": {
                     "type": "string"
                 },
-                "level": {
+                "log_time": {
                     "type": "string"
                 },
                 "message": {
                     "type": "string"
                 },
                 "recorded_at": {
-                    "type": "string"
-                },
-                "type": {
                     "type": "string"
                 },
                 "user_id": {
@@ -1528,6 +1531,9 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "log_time": {
+                    "type": "string"
+                },
                 "ram": {
                     "type": "number"
                 },
@@ -1542,10 +1548,16 @@ const docTemplate = `{
                 "agent_id": {
                     "type": "string"
                 },
+                "bytes": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "string"
                 },
                 "ip_address": {
+                    "type": "string"
+                },
+                "log_time": {
                     "type": "string"
                 },
                 "method": {
@@ -1557,11 +1569,11 @@ const docTemplate = `{
                 "recorded_at": {
                     "type": "string"
                 },
-                "response_time": {
-                    "type": "integer"
-                },
                 "status": {
                     "type": "integer"
+                },
+                "user_agent": {
+                    "type": "string"
                 }
             }
         },
@@ -1645,7 +1657,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
-	BasePath:         "",
+	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Sentinel API",
 	Description:      "API server for application",

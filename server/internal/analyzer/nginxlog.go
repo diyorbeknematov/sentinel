@@ -7,11 +7,6 @@ import (
 	"github.com/diyorbek/sentinel/internal/models"
 )
 
-var (
-	requestCounts  = make(map[string][]time.Time) // ip → vaqtlar (DDoS)
-	notFoundCounts = make(map[string][]time.Time) // ip → vaqtlar (404)
-)
-
 func (la *LogAnalyzer) AnalyzeNginxLog(log *models.NginxLog) *AnalyzeRes {
 	if r := la.checkDDoS(log); r != nil {
 		return r

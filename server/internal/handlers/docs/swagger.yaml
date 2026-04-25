@@ -1,3 +1,4 @@
+basePath: /
 definitions:
   handlers.ErrorResponse:
     properties:
@@ -29,6 +30,8 @@ definitions:
     type: object
   handlers.createAgentResponse:
     properties:
+      api_key:
+        type: string
       id:
         type: string
       message:
@@ -87,17 +90,17 @@ definitions:
     properties:
       agent_id:
         type: string
+      event:
+        type: string
       id:
         type: string
-      ip_address:
-        type: string
       level:
+        type: string
+      log_time:
         type: string
       message:
         type: string
       recorded_at:
-        type: string
-      type:
         type: string
       user_id:
         type: string
@@ -129,6 +132,8 @@ definitions:
         type: number
       id:
         type: string
+      log_time:
+        type: string
       ram:
         type: number
       recorded_at:
@@ -138,9 +143,13 @@ definitions:
     properties:
       agent_id:
         type: string
+      bytes:
+        type: integer
       id:
         type: string
       ip_address:
+        type: string
+      log_time:
         type: string
       method:
         type: string
@@ -148,10 +157,10 @@ definitions:
         type: string
       recorded_at:
         type: string
-      response_time:
-        type: integer
       status:
         type: integer
+      user_agent:
+        type: string
     type: object
   models.Register:
     properties:

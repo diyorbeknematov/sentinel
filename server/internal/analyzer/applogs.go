@@ -5,15 +5,6 @@ import (
 	"time"
 
 	"github.com/diyorbek/sentinel/internal/models"
-	"github.com/google/uuid"
-)
-
-var (
-	// Brute Force: IP → [vaqtlar]
-	failedLogins = make(map[string][]time.Time)
-
-	// Ko'p ERROR: agentID → [vaqtlar]
-	errorCounts = make(map[uuid.UUID][]time.Time)
 )
 
 var sqlPatterns = []string{

@@ -7,6 +7,7 @@
         "version": "1.0"
     },
     "host": "localhost:8080",
+    "basePath": "/",
     "paths": {
         "/sentinel/api/agents": {
             "get": {
@@ -1370,6 +1371,9 @@
         "handlers.createAgentResponse": {
             "type": "object",
             "properties": {
+                "api_key": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -1457,22 +1461,22 @@
                 "agent_id": {
                     "type": "string"
                 },
+                "event": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
-                "ip_address": {
+                "level": {
                     "type": "string"
                 },
-                "level": {
+                "log_time": {
                     "type": "string"
                 },
                 "message": {
                     "type": "string"
                 },
                 "recorded_at": {
-                    "type": "string"
-                },
-                "type": {
                     "type": "string"
                 },
                 "user_id": {
@@ -1521,6 +1525,9 @@
                 "id": {
                     "type": "string"
                 },
+                "log_time": {
+                    "type": "string"
+                },
                 "ram": {
                     "type": "number"
                 },
@@ -1535,10 +1542,16 @@
                 "agent_id": {
                     "type": "string"
                 },
+                "bytes": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "string"
                 },
                 "ip_address": {
+                    "type": "string"
+                },
+                "log_time": {
                     "type": "string"
                 },
                 "method": {
@@ -1550,11 +1563,11 @@
                 "recorded_at": {
                     "type": "string"
                 },
-                "response_time": {
-                    "type": "integer"
-                },
                 "status": {
                     "type": "integer"
+                },
+                "user_agent": {
+                    "type": "string"
                 }
             }
         },

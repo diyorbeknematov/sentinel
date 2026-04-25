@@ -17,7 +17,7 @@ mig-create-tables:
 	migrate create -ext sql -dir internal/migrations -seq DB_NAME
 
 swag-gen:
-	~/go/bin/swag init -g cmd/sentinel/main.go -o internal/handlers/docs
+	~/go/bin/swag init -g cmd/main.go -o internal/handlers/docs
 
 print:
 	@echo $(DB_USER)
