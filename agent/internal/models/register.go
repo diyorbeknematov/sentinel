@@ -8,6 +8,6 @@ type RegisterRequest struct {
 }
 
 type RegisterResponse struct {
-	AgentId uuid.UUID `json:"agent_id"`
+	AgentID uuid.UUID `json:"id"`
 	APIKey  string    `json:"api_key"`
 }

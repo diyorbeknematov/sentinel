@@ -1,14 +1,10 @@
-# agent.yaml
-server:
-  url: http://localhost:8080
-
-agent:
-  name: my-agent
-
-agent_id: "server-prod-01"
+agent_name: server-prod-01
+agent_id: af6dabe9-cc13-43b5-951e-f8e15d05749a
+api_key: Qs3coKl8Dhnm_bUxDYwO9_6sTuxNn_N7M08lPQY3SDI=
+server_url: http://localhost:8081
 app_log: /var/log/myapp/app.log
 nginx_log: /var/log/nginx/access.log
 metrics_interval: 5s
 kafka_brokers:
-  - localhost:9092
-kafka_topic: sentinel-events
+    - localhost:9094
+kafka_topic: sentinel-topic
