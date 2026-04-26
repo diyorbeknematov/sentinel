@@ -28,13 +28,13 @@ type CreateAppLog struct {
 }
 
 type FilterAppLog struct {
-	AgentId uuid.UUID `json:"agent_id"`
-	UserId  string    `json:"user_id"`
-	Event   string    `json:"event"`
-	Level   string    `json:"level"`
-	From    time.Time `json:"from"`
-	To      time.Time `json:"to"`
+	AgentId uuid.UUID `form:"agent_id"`
+	UserId  string    `form:"user_id"`
+	Event   string    `form:"event"`
+	Level   string    `form:"level"`
+	From    time.Time `form:"from"`
+	To      time.Time `form:"to"`
 
-	Limit  int `json:"limit"`
-	Offset int `json:"offset"`
+	Limit  int `form:"limit"`
+	Offset int `form:"-"`
 }

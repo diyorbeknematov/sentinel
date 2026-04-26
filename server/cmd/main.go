@@ -19,7 +19,7 @@ import (
 // @Title Sentinel API
 // @Version 1.0
 // @Description API server for application
-// @host localhost:8080
+// @host localhost:8081
 // @BasePath /
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())

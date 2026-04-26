@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/diyorbek/sentinel/internal/config"
+	"github.com/diyorbek/sentinel/internal/handlers/middleware"
 	"github.com/diyorbek/sentinel/internal/service"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -26,6 +27,8 @@ func (h *Handler) InitRoutes(cfg *config.Config) *gin.Engine {
 	router := gin.Default()
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	
+	router.Use(middleware.CORSMiddleware())
 
 	// Public routes
 	h.SetupPublicRoutes(router)
@@ -67,7 +70,7 @@ func (h *Handler) SetupRoutes(router *gin.Engine) {
 		logs.GET("/metrics/:id", h.GetMetricsByID)
 		logs.GET("/metrics", h.ListMetrics)
 	}
-	alerts := router.Group("/sentinel/alerts")
+	alerts := router.Group("/sentinel/api/alerts")
 	{
 		alerts.GET("/:id", h.GetAlertByID)
 		alerts.GET("/", h.ListAlerts)

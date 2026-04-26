@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net"
+	"strconv"
 
 	"github.com/diyorbek/sentinel/internal/models"
 	"github.com/segmentio/kafka-go"
@@ -23,6 +25,8 @@ type Consumer struct {
 }
 
 func New(brokers []string, topic, groupID string, handler EventHandler, logger *slog.Logger) *Consumer {
+	createTopicIfNotExists(brokers, topic)
+
 	return &Consumer{
 		reader: kafka.NewReader(kafka.ReaderConfig{
 			Brokers:        brokers,
@@ -88,4 +92,31 @@ func (c *Consumer) process(ctx context.Context, msg kafka.Message) error {
 
 func (c *Consumer) Close() error {
 	return c.reader.Close()
+}
+
+func createTopicIfNotExists(brokers []string, topic string) error {
+	conn, err := kafka.Dial("tcp", brokers[0])
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	controller, err := conn.Controller()
+	if err != nil {
+		return err
+	}
+
+	controllerConn, err := kafka.Dial("tcp", net.JoinHostPort(controller.Host, strconv.Itoa(controller.Port)))
+	if err != nil {
+		return err
+	}
+	defer controllerConn.Close()
+
+	controllerConn.CreateTopics(kafka.TopicConfig{
+		Topic:             topic,
+		NumPartitions:     3,
+		ReplicationFactor: 1,
+	})
+
+	return nil
 }

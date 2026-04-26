@@ -26,6 +26,7 @@ func NewEventHanler(service *service.Service, analyzer *analyzer.LogAnalyzer, lo
 }
 
 func (h *EventHandler) HandleMetric(ctx context.Context, event models.Event) error {
+	fmt.Println(event)
 	var metric models.Metric
 	if err := json.Unmarshal(event.Payload, &metric); err != nil {
 		return fmt.Errorf("parse metric: %w", err)

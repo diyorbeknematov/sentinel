@@ -44,7 +44,7 @@ func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 
 	return &App{
 		server: &http.Server{
-			Addr:         ":8080",
+			Addr:         fmt.Sprintf(":%s", cfg.HTTPPort),
 			Handler:      router,
 			ReadTimeout:  10 * time.Second,
 			WriteTimeout: 10 * time.Second,

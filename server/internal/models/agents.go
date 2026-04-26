@@ -28,10 +28,10 @@ type UpdateLastSeen struct {
 }
 
 type FilterAgent struct {
-	Name      string    `json:"name"`
-	From      time.Time `json:"from"`
-	To        time.Time `json:"to"`
+	Name string    `form:"name"`
+	From time.Time `form:"from"`
+	To   time.Time `form:"to"`
 
-	Limit  int `json:"limit"`
-	Offset int `json:"-"`
+	Limit  int `form:"limit"`
+	Offset int `form:"-"`
 }

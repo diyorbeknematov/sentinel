@@ -32,12 +32,12 @@ type CreateNginxLog struct {
 }
 
 type FilterNginxLog struct {
-	AgentId uuid.UUID `json:"agent_id"`
-	Method  string    `json:"method"`
-	Status  int       `json:"status"`
-	From    time.Time `json:"from"`
-	To      time.Time `json:"to"`
+	AgentId uuid.UUID `form:"agent_id"`
+	Method  string    `form:"method"`
+	Status  int       `form:"status"`
+	From    time.Time `form:"from"`
+	To      time.Time `form:"to"`
 
-	Limit  int `json:"limit"`
-	Offset int `json:"offset"`
+	Limit  int `form:"limit"`
+	Offset int `form:"-"`
 }
