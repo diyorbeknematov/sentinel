@@ -56,7 +56,7 @@ func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 }
 
 func (a *App) RunHTTP() error {
-	a.logger.Info("server started", slog.String("addr", a.server.Addr))
+	a.logger.Info(fmt.Sprintf("server started. addr :%s", a.server.Addr))
 	return a.server.ListenAndServe()
 }
 

@@ -18,7 +18,7 @@ type LogAnalyzer struct {
 	mu sync.Mutex // barcha map'lar uchun bitta mutex yetarli
 
 	// AppLog uchun
-	failedLogins map[string][]time.Time
+	eventCounts map[string][]time.Time
 	errorCounts  map[uuid.UUID][]time.Time
 
 	// NginxLog uchun
@@ -28,7 +28,7 @@ type LogAnalyzer struct {
 
 func NewLogAnalyzer() *LogAnalyzer {
 	return &LogAnalyzer{
-		failedLogins:   make(map[string][]time.Time),
+		eventCounts:   make(map[string][]time.Time),
 		errorCounts:    make(map[uuid.UUID][]time.Time),
 		requestCounts:  make(map[string][]time.Time),
 		notFoundCounts: make(map[string][]time.Time),
@@ -45,9 +45,9 @@ func (la *LogAnalyzer) StartCleanup(ctx context.Context) {
 		case <-ticker.C:
 			la.mu.Lock()
 			// bo'sh bo'lgan keylarni o'chiramiz
-			for k, v := range la.failedLogins {
+			for k, v := range la.eventCounts {
 				if len(filterRecent(v, time.Minute)) == 0 {
-					delete(la.failedLogins, k)
+					delete(la.eventCounts, k)
 				}
 			}
 			for k, v := range la.requestCounts {

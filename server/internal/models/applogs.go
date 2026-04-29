@@ -8,7 +8,7 @@ import (
 
 type Log struct {
 	Id         uuid.UUID `json:"id"`
-	UserId     string    `json:"user_id"`
+	UserId     string    `json:"user_id,omitempty"`
 	Event      string    `json:"event"`
 	Level      string    `json:"level"`
 	Message    string    `json:"message"`

@@ -82,7 +82,7 @@ func (la *LogAnalyzer) check404Scanning(log *models.NginxLog) *AnalyzeRes {
 	if len(la.notFoundCounts[log.IPAddress]) >= 20 {
 		return &AnalyzeRes{
 			ThreatType: "SCANNING",
-			Severity:   "MEDIUM",
+			Severity:   "WARNING",
 			Message:    "IP: " + log.IPAddress + " tizimni paypaslamoqda",
 		}
 	}
