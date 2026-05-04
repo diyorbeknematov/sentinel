@@ -2,41 +2,35 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/diyorbek/sentinel/internal/models"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type alertListResponse struct {
-	Data  []models.Alert `json:"data"`
-	Total int            `json:"total"`
-	Page  int            `json:"page"`
-	Limit int            `json:"limit"`
+	Data  []models.AlertResponse `json:"data"`
+	Total int                    `json:"total"`
+	Page  int                    `json:"page"`
+	Limit int                    `json:"limit"`
 }
 
-// @Description Get Alert by id 
-// @Summary Get Alert by id 
+// @Description Get Alert by id
+// @Summary Get Alert by id
 // @Tags alerts
-// @Accept json 
-// @Produce json 
+// @Accept json
+// @Produce json
 // @Param id path string true "alert id"
 // @Sucess 200 {object} models.Alert
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinel/api/alerts/{id} [get]
+// @Router /sentinel/alerts/{id} [get]
+// @Security BearerAuth
 func (h *Handler) GetAlertByID(ctx *gin.Context) {
-	paramValue := ctx.Param("id")
-	if paramValue == "" {
+	id := ctx.Param("id")
+	if id == "" {
 		h.logger.Warn("empty param value")
 		errorResponse(ctx, http.StatusBadRequest, errors.New("param value is emtpy"))
-		return
-	}
-
-	id, err := uuid.Parse(paramValue)
-	if err != nil {
-		h.logger.Error(err.Error())
-		errorResponse(ctx, http.StatusBadRequest, errors.New("agent id is wrong"))
 		return
 	}
 
@@ -50,11 +44,11 @@ func (h *Handler) GetAlertByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, alert)
 }
 
-// @Description Get alerts by filter 
-// @Summary Get alerts by filter 
-// @Tags alerts 
-// @Accept json 
-// @Produce json 
+// @Description Get alerts by filter
+// @Summary Get alerts by filter
+// @Tags alerts
+// @Accept json
+// @Produce json
 // @Param agent_id query string false "agent id"
 // @Pram type query string false "type"
 // @Param severity query string false "severity"
@@ -65,7 +59,8 @@ func (h *Handler) GetAlertByID(ctx *gin.Context) {
 // @Param page query int false "Page" default(1)
 // @Sucess 200 {object} nginxListResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinel/api/alerts [get]
+// @Router /sentinel/alerts [get]
+// @Security BearerAuth
 func (h *Handler) ListAlerts(ctx *gin.Context) {
 	var filter models.FilterAlert
 
@@ -82,7 +77,7 @@ func (h *Handler) ListAlerts(ctx *gin.Context) {
 		return
 	}
 	filter.Offset = (page - 1) * filter.Limit
-
+	fmt.Println(filter)
 	alerts, total, err := h.service.Alert.ListAlerts(filter)
 	if err != nil {
 		h.logger.Error(err.Error())
@@ -99,40 +94,24 @@ func (h *Handler) ListAlerts(ctx *gin.Context) {
 }
 
 // @Description Mark alert read
-// @Summary Mark alert read 
-// @Tags alerts 
-// @Accept json 
-// @Produce json 
+// @Summary Mark alert read
+// @Tags alerts
+// @Accept json
+// @Produce json
 // @Param id path string true "alert id"
-// @Param mark_read body models.MarkAlertRead true "mark alert reaad"
 // @Success 200 {object} SuccessResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinel/api/alerts/{id}/markread [put]
+// @Router /sentinel/alerts/{id}/markread [put]
+// @Security BearerAuth
 func (h *Handler) MarkAlertRead(ctx *gin.Context) {
-	paramValue := ctx.Param("id")
-	if paramValue == "" {
+	id := ctx.Param("id")
+	if id == "" {
 		h.logger.Warn("empty param value")
 		errorResponse(ctx, http.StatusBadRequest, errors.New("param value is emtpy"))
 		return
 	}
 
-	id, err := uuid.Parse(paramValue)
-	if err != nil {
-		h.logger.Error(err.Error())
-		errorResponse(ctx, http.StatusBadRequest, errors.New("agent id is wrong"))
-		return
-	}
-
-	var body models.MarkAlertRead
-	if err = ctx.ShouldBindJSON(&body); err != nil {
-		h.logger.Warn(err.Error())
-		errorResponse(ctx, http.StatusBadRequest, err)
-		return
-	}
-
-	body.Id = id
-
-	err = h.service.Alert.MarkAlertRead(body)
+	err := h.service.Alert.MarkAlertRead(id)
 	if err != nil {
 		h.logger.Error(err.Error())
 		errorResponse(ctx, http.StatusInternalServerError, err)

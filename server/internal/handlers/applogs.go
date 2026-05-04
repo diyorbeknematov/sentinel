@@ -6,37 +6,30 @@ import (
 
 	"github.com/diyorbek/sentinel/internal/models"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type appLogListResponse struct {
-	Data  []models.Log `json:"data"`
-	Total int          `json:"total"`
-	Page  int          `json:"page"`
-	Limit int          `json:"limit"`
+	Data  []models.AppLogResponse `json:"data"`
+	Total int                     `json:"total"`
+	Page  int                     `json:"page"`
+	Limit int                     `json:"limit"`
 }
 
 // @Description Get applog by id
 // @Summary Get applog by id
 // @Tags logs
-// @Accept json 
-// @Produce json 
+// @Accept json
+// @Produce json
 // @Param id path string true "app log id"
 // @Success 200 {object} models.Log
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinel/api/applogs/{id} [get]
+// @Router /sentinel/applogs/{id} [get]
+// @Security BearerAuth
 func (h *Handler) GetAppLogByID(ctx *gin.Context) {
-	paramValue := ctx.Param("id")
-	if paramValue == "" {
+	id := ctx.Param("id")
+	if id == "" {
 		h.logger.Warn("empty param value")
 		errorResponse(ctx, http.StatusBadRequest, errors.New("param value is emtpy"))
-		return
-	}
-
-	id, err := uuid.Parse(paramValue)
-	if err != nil {
-		h.logger.Error(err.Error())
-		errorResponse(ctx, http.StatusBadRequest, errors.New("agent id is wrong"))
 		return
 	}
 
@@ -50,11 +43,11 @@ func (h *Handler) GetAppLogByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, appLog)
 }
 
-// @Description Get app logs by filter 
-// @Summary Get app logs by filter 
-// @Tags logs 
+// @Description Get app logs by filter
+// @Summary Get app logs by filter
+// @Tags logs
 // Accept json
-// @Produce json 
+// @Produce json
 // @Param agent_id query string false "agent id"
 // @Param user_id query string false "user id"
 // @Param type query string false "type"
@@ -65,7 +58,8 @@ func (h *Handler) GetAppLogByID(ctx *gin.Context) {
 // @Param page query int false "Page" default(1)
 // @Sucess 200 {object} appLogListResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinel/api/applogs [get]
+// @Router /sentinel/applogs [get]
+// @Security BearerAuth
 func (h *Handler) GetListAppLog(ctx *gin.Context) {
 	var filter models.FilterAppLog
 

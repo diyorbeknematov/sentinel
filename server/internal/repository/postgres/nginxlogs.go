@@ -19,8 +19,6 @@ func NewNGINXLogRepo(db *sqlx.DB) *nginxLogRepo {
 }
 
 func (r *nginxLogRepo) CreateNginxLog(log models.CreateNginxLog) (uuid.UUID, error) {
-	id := uuid.New()
-
 	query := `
 	INSERT INTO nginxlogs (
 		id,
@@ -36,7 +34,7 @@ func (r *nginxLogRepo) CreateNginxLog(log models.CreateNginxLog) (uuid.UUID, err
 	`
 
 	if _, err := r.db.Exec(query,
-		id,
+		log.Id,
 		log.AgentId,
 		log.IPAddress,
 		log.Method,
@@ -49,7 +47,7 @@ func (r *nginxLogRepo) CreateNginxLog(log models.CreateNginxLog) (uuid.UUID, err
 		return uuid.Nil, err
 	}
 
-	return id, nil
+	return log.Id, nil
 }
 
 func (r *nginxLogRepo) GetNginxLogByID(id uuid.UUID) (models.NginxLog, error) {
@@ -89,24 +87,31 @@ func (r *nginxLogRepo) GetNginxLogByID(id uuid.UUID) (models.NginxLog, error) {
 	return log, nil
 }
 
-func (r *nginxLogRepo) ListNginxLogs(filter models.FilterNginxLog) ([]models.NginxLog, int, error) {
+func (r *nginxLogRepo) ListNginxLogs(filter models.FilterNginxLogDB) ([]models.NginxLogResponse, int, error) {
+
 	baseQuery := `
 	SELECT
-		id,
-		agent_id,
-		ip_address,
-		method,
-		path,
-		status,
-		bytes,
-		user_agent,
-		log_time,
-		recorded_at
-	FROM nginxlogs
-	WHERE TRUE 
+		nl.id,
+		a.name AS agent_name,
+		nl.ip_address,
+		nl.method,
+		nl.path,
+		nl.status,
+		nl.bytes,
+		nl.user_agent,
+		nl.log_time,
+		nl.recorded_at
+	FROM nginxlogs nl
+	LEFT JOIN agents a ON nl.agent_id = a.id
+	WHERE TRUE
 	`
 
-	countQuery := `SELECT COUNT(id) FROM nginxlogs WHER TRUE `
+	countQuery := `
+	SELECT COUNT(nl.id)
+	FROM nginxlogs nl
+	LEFT JOIN agents a ON nl.agent_id = a.id
+	WHERE TRUE
+	`
 
 	conditions := []string{}
 	params := map[string]any{
@@ -114,10 +119,9 @@ func (r *nginxLogRepo) ListNginxLogs(filter models.FilterNginxLog) ([]models.Ngi
 		"offset": filter.Offset,
 	}
 
-	// Add search condition
 	if filter.AgentId != uuid.Nil {
-		conditions = append(conditions, "agent_id = :agentId")
-		params["agentId"] = filter.AgentId
+		conditions = append(conditions, "agent_id = :agent_id")
+		params["agent_id"] = filter.AgentId
 	}
 
 	if filter.Method != "" {
@@ -140,28 +144,28 @@ func (r *nginxLogRepo) ListNginxLogs(filter models.FilterNginxLog) ([]models.Ngi
 		params["to"] = filter.To
 	}
 
-	// ADD WHERE clause if conditions exist
 	if len(conditions) > 0 {
-		whereClause := " AND " + strings.Join(conditions, " AND ")
-		baseQuery += whereClause
-		countQuery += whereClause
+		where := " AND " + strings.Join(conditions, " AND ")
+		baseQuery += where
+		countQuery += where
 	}
 
 	baseQuery += " ORDER BY recorded_at DESC LIMIT :limit OFFSET :offset"
 
-	// Exectue the main query
+	// 🔹 MAIN QUERY
 	rows, err := r.db.NamedQuery(baseQuery, params)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer rows.Close()
 
-	var logs []models.NginxLog
+	var logs []models.NginxLogResponse
 	for rows.Next() {
-		var l models.NginxLog
-		if err := rows.Scan(
+		var l models.NginxLogResponse
+
+		err := rows.Scan(
 			&l.Id,
-			&l.AgentId,
+			&l.AgentName,
 			&l.IPAddress,
 			&l.Method,
 			&l.Path,
@@ -170,20 +174,24 @@ func (r *nginxLogRepo) ListNginxLogs(filter models.FilterNginxLog) ([]models.Ngi
 			&l.UserAgent,
 			&l.LogTime,
 			&l.RecordedAt,
-		); err != nil {
+		)
+		if err != nil {
 			return nil, 0, err
 		}
 
 		logs = append(logs, l)
 	}
 
-	var total int
-	countQuery, countArgs, err := sqlx.Named(countQuery, params)
+	// 🔹 COUNT QUERY
+	countQuery, args, err := sqlx.Named(countQuery, params)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	if err := r.db.Get(&total, countQuery, countArgs...); err != nil {
+	countQuery = sqlx.Rebind(sqlx.DOLLAR, countQuery)
+
+	var total int
+	if err := r.db.Get(&total, countQuery, args...); err != nil {
 		return nil, 0, err
 	}
 

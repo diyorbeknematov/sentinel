@@ -89,17 +89,6 @@ function DropdownFilter({ label, options, value, onChange }) {
   )
 }
 
-const mockLogs = [
-  { id:'1', level:'error', event:'auth.failed',    message:'Invalid token: signature mismatch',       log_time:'2024-01-25T14:32:05Z', agent_id:'app-01', user_id:'user-9921' },
-  { id:'2', level:'warn',  event:'db.slow_query',  message:'Query exceeded 2000ms threshold',         log_time:'2024-01-25T14:31:50Z', agent_id:'app-01', user_id:'system' },
-  { id:'3', level:'info',  event:'user.login',     message:'User authenticated successfully',         log_time:'2024-01-25T14:31:44Z', agent_id:'app-01', user_id:'user-4412' },
-  { id:'4', level:'error', event:'payment.failed', message:'Payment gateway timeout after 5000ms',   log_time:'2024-01-25T14:31:38Z', agent_id:'app-01', user_id:'user-7731' },
-  { id:'5', level:'debug', event:'cache.miss',     message:'Cache miss for key: user:4412:profile',  log_time:'2024-01-25T14:31:20Z', agent_id:'app-01', user_id:'user-4412' },
-  { id:'6', level:'error', event:'db.error',       message:'Connection pool exhausted: max 20 reached', log_time:'2024-01-25T14:31:10Z', agent_id:'app-02', user_id:'system' },
-  { id:'7', level:'info',  event:'user.logout',    message:'User session terminated normally',        log_time:'2024-01-25T14:30:58Z', agent_id:'app-01', user_id:'user-1122' },
-  { id:'8', level:'warn',  event:'rate.limit',     message:'User exceeded API rate limit: 100/min',  log_time:'2024-01-25T14:30:44Z', agent_id:'app-02', user_id:'user-5531' },
-]
-
 const S = {
   card: { background:'#0d1120', border:'1px solid #1e293b', borderRadius:'12px' },
   th: {
@@ -116,21 +105,25 @@ const S = {
 }
 
 export default function AppLogs() {
-  const [logs, setLogs]             = useState(mockLogs)
+  const [logs, setLogs]             = useState([])
   const [agents, setAgents]         = useState([])
   const [agentId, setAgentId]       = useState('')
   const [level, setLevel]           = useState('')
   const [from, setFrom]             = useState('')
   const [to, setTo]                 = useState('')
-  const [total, setTotal]           = useState(mockLogs.length)
+  const [total, setTotal]           = useState(0)
   const [expandedId, setExpandedId] = useState(null)
   const [loading, setLoading]       = useState(false)
+
+  const [page, setPage] = useState(1)
+  const limit = 30
 
   useEffect(() => {
     const fetchAgents = async () => {
       try {
-        const res = await api.get('/sentinel/api/agents')
-        if (Array.isArray(res.data)) setAgents(res.data)
+        const res = await api.get('/agents')
+        const agentsData = res.data?.data || []
+        if (Array.isArray(agentsData)) setAgents(agentsData)
       } catch { /* mock */ }
     }
     fetchAgents()
@@ -144,18 +137,20 @@ export default function AppLogs() {
       if (level)   params.append('level', level)
       if (from)    params.append('from', new Date(from).toISOString())
       if (to)      params.append('to',   new Date(to).toISOString())
-      params.append('limit', 50)
+      params.append('limit', limit)
+      params.append('page', page)
 
-      const res = await api.get(`/sentinel/api/applogs?${params}`)
-      if (Array.isArray(res.data)) {
-        setLogs(res.data)
-        setTotal(res.data.length)
-      }
+      const res = await api.get(`/applogs?${params}`)
+      const appLogs = res.data?.data || []
+      
+      setLogs(appLogs)
+      setTotal(res.data?.total || 0)
     } catch { /* mock */ }
     finally { setLoading(false) }
   }
 
-  useEffect(() => { fetchLogs() }, [agentId, level])
+  useEffect(() => { fetchLogs() }, [agentId, level, page])
+  useEffect(() => { setPage(1) }, [agentId, level, from, to])
 
   const agentOptions = [
     { value:'', label:'All agents' },
@@ -172,6 +167,7 @@ export default function AppLogs() {
 
   const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id)
 
+  const totalPages = Math.ceil(total / limit)
   return (
     <div style={{ minHeight:'100vh' }}>
 
@@ -311,7 +307,8 @@ export default function AppLogs() {
           </thead>
           <tbody>
             {logs.map(log => {
-              const ls       = LEVEL_STYLE[log.level] || LEVEL_STYLE.debug
+              const lvl = log.level
+              const ls = LEVEL_STYLE[lvl] || LEVEL_STYLE.debug
               const expanded = expandedId === log.id
 
               return (
@@ -331,14 +328,14 @@ export default function AppLogs() {
                       {formatTime(log.log_time)}
                     </td>
                     <td style={S.td}>
-                      <Badge label={log.level} bg={ls.bg} text={ls.text} />
+                      <Badge label={log.level?.toUpperCase()} bg={ls.bg} text={ls.text} />
                     </td>
                     <td style={{ ...S.td, color:'#cbd5e1' }}>{log.event}</td>
-                    <td style={{ ...S.td, color: log.level === 'error' ? '#fca5a5' : log.level === 'warn' ? '#fcd34d' : '#94a3b8' }}>
+                    <td style={{ ...S.td, color: lvl === 'error' ? '#fca5a5' : lvl === 'warn' ? '#fcd34d' : '#94a3b8' }}>
                       {log.message}
                     </td>
                     <td style={S.td}>
-                      <Badge label={log.agent_id} bg='rgba(100,116,139,0.12)' text='#94a3b8' />
+                      <Badge label={log.agent_name} bg='rgba(100,116,139,0.12)' text='#94a3b8' />
                     </td>
                     <td style={{ ...S.td, color:'#475569', textAlign:'center' }}>
                       <span style={{ transition:'transform 0.2s', display:'inline-block', transform: expanded ? 'rotate(90deg)' : 'none' }}>›</span>
@@ -350,7 +347,7 @@ export default function AppLogs() {
                     <tr key={`${log.id}-exp`} style={{ borderBottom:'1px solid rgba(30,41,59,0.5)' }}>
                       <td colSpan={6} style={{ padding:'0 16px 14px' }}>
                         <div style={{
-                          background: log.level === 'error' ? '#1a0a0a' : log.level === 'warn' ? '#1a1400' : '#0a0f1a',
+                          background: lvl === 'error' ? '#1a0a0a' : lvl === 'warn' ? '#1a1400' : '#0a0f1a',
                           border: `1px solid ${ls.dot}33`,
                           borderRadius:'8px', padding:'12px 16px',
                           fontFamily:'monospace', fontSize:'11px', lineHeight:2,
@@ -366,7 +363,7 @@ export default function AppLogs() {
                           <span style={{ color:'#475569' }}>user_id:   </span>
                           <span style={{ color:'#a5b4fc' }}>{log.user_id}</span><br/>
                           <span style={{ color:'#475569' }}>agent_id:  </span>
-                          <span style={{ color:'#818cf8' }}>{log.agent_id}</span>
+                          <span style={{ color:'#818cf8' }}>{log.agent_name}</span>
                         </div>
                       </td>
                     </tr>
@@ -376,6 +373,73 @@ export default function AppLogs() {
             })}
           </tbody>
         </table>
+
+        {/* Pagination */}
+        <div style={{
+          display:'flex',
+          justifyContent:'space-between',
+          alignItems:'center',
+          padding:'12px 16px',
+          borderTop:'1px solid #1e293b'
+        }}>
+          <span style={{ fontSize:'11px', color:'#475569', fontFamily:'monospace' }}>
+            Page {page} of {totalPages}
+          </span>
+
+          <div style={{ display:'flex', gap:'6px' }}>
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              style={{
+                padding:'6px 12px',
+                fontSize:'11px',
+                borderRadius:'6px',
+                border:'1px solid #1e293b',
+                background: page === 1 ? 'rgba(255,255,255,0.05)' : 'rgba(234,179,8,0.08)',
+                color: page === 1 ? '#475569' : '#facc15',
+                cursor: page === 1 ? 'not-allowed' : 'pointer',
+                fontFamily:'monospace',
+                transition:'all 0.2s ease',
+              }}
+
+              onMouseEnter={e => {
+                if (page > 1) e.currentTarget.style.background = 'rgba(250,204,21,0.15)'
+              }}
+
+              onMouseLeave={e => {
+                if (page > 1) e.currentTarget.style.background = 'rgba(234,179,8,0.08)'
+              }}
+            >
+              Prev
+            </button>
+
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              style={{
+                padding:'6px 12px',
+                fontSize:'11px',
+                borderRadius:'6px',
+                border:'1px solid #1e293b',
+                background: page === totalPages ? 'rgba(255,255,255,0.05)' : 'rgba(234,179,8,0.08)',
+                color: page === totalPages ? '#475569' : '#facc15',
+                cursor: page === totalPages ? 'not-allowed' : 'pointer',
+                fontFamily:'monospace',
+                transition:'all 0.2s ease',
+              }}   
+              
+              onMouseEnter={ e => {
+                if (page != totalPages) e.currentTarget.style.background = 'rgba(250,204,21,0.15)'
+              }}
+
+              onMouseMove={ e => {
+                if (page != totalPages) e.currentTarget.style.background = 'rgba(234,179,8,0.08)'
+              }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
 
         {logs.length === 0 && (
           <div style={{ padding:'48px', textAlign:'center', color:'#334155', fontFamily:'monospace', fontSize:'13px' }}>

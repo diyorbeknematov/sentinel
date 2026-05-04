@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, use } from 'react'
 import api from '../api/axios'
 
 const METHOD_COLORS = {
@@ -102,17 +102,6 @@ function DropdownFilter({ label, options, value, onChange }) {
   )
 }
 
-const mockLogs = [
-  { id:'1', method:'GET',    path:'/api/users',        status:200, ip_address:'192.168.1.12', bytes:2142, user_agent:'Mozilla/5.0 (Mac)', log_time:'2024-01-25T14:32:01Z', agent_id:'nginx-01' },
-  { id:'2', method:'POST',   path:'/sentinel/login',   status:401, ip_address:'203.0.113.44', bytes:412,  user_agent:'Mozilla/5.0 (Windows NT 10.0; Win64)', log_time:'2024-01-25T14:31:55Z', agent_id:'nginx-01' },
-  { id:'3', method:'GET',    path:'/api/metrics',      status:500, ip_address:'10.0.0.5',     bytes:102,  user_agent:'axios/1.4.0', log_time:'2024-01-25T14:31:48Z', agent_id:'nginx-02' },
-  { id:'4', method:'GET',    path:'/api/agents',       status:200, ip_address:'10.0.0.3',     bytes:5842, user_agent:'axios/1.4.0', log_time:'2024-01-25T14:31:40Z', agent_id:'nginx-01' },
-  { id:'5', method:'DELETE', path:'/api/users/9982',   status:404, ip_address:'10.0.0.8',     bytes:201,  user_agent:'insomnia/2023.5', log_time:'2024-01-25T14:31:22Z', agent_id:'nginx-01' },
-  { id:'6', method:'PUT',    path:'/api/users/12/role',status:200, ip_address:'192.168.1.55', bytes:344,  user_agent:'Mozilla/5.0 (Linux)', log_time:'2024-01-25T14:31:10Z', agent_id:'nginx-02' },
-  { id:'7', method:'GET',    path:'/api/applogs',      status:200, ip_address:'10.0.0.3',     bytes:8921, user_agent:'axios/1.4.0', log_time:'2024-01-25T14:30:58Z', agent_id:'nginx-01' },
-  { id:'8', method:'POST',   path:'/sentinel/login',   status:401, ip_address:'203.0.113.44', bytes:412,  user_agent:'Python-urllib/3.9', log_time:'2024-01-25T14:30:44Z', agent_id:'nginx-02' },
-]
-
 const S = {
   card: { background:'#0d1120', border:'1px solid #1e293b', borderRadius:'12px' },
   th: {
@@ -129,23 +118,27 @@ const S = {
 }
 
 export default function NginxLogs() {
-  const [logs, setLogs]           = useState(mockLogs)
+  const [logs, setLogs]           = useState([])
   const [agents, setAgents]       = useState([])
   const [agentId, setAgentId]     = useState('')
   const [method, setMethod]       = useState('')
   const [status, setStatus]       = useState('')
   const [from, setFrom]           = useState('')
   const [to, setTo]               = useState('')
-  const [total, setTotal]         = useState(mockLogs.length)
+  const [total, setTotal]         = useState(0)
   const [expandedId, setExpandedId] = useState(null)
   const [loading, setLoading]     = useState(false)
+
+  const [page, setPage] = useState(1)
+  const limit = 30
 
   // Agentlar ro'yxatini olish
   useEffect(() => {
     const fetchAgents = async () => {
       try {
-        const res = await api.get('/sentinel/api/agents')
-        if (Array.isArray(res.data)) setAgents(res.data)
+        const res = await api.get('/agents')
+        const agentsData = res.data?.data || []
+        if (Array.isArray(agentsData)) setAgents(agentsData)
       } catch { /* mock */ }
     }
     fetchAgents()
@@ -164,19 +157,21 @@ export default function NginxLogs() {
       }
       if (from) params.append('from', new Date(from).toISOString())
       if (to)   params.append('to',   new Date(to).toISOString())
-      params.append('limit', 50)
+      params.append('limit', limit)
+      params.append('page', page)
 
-      const res = await api.get(`/sentinel/api/nginxlogs?${params}`)
-      if (Array.isArray(res.data)) {
-        setLogs(res.data)
-        setTotal(res.data.length)
-      }
+      const res = await api.get(`/nginxlogs?${params}`)
+      const nginxLogs = res.data?.data || []
+
+      setLogs(nginxLogs)
+      setTotal(res.data?.total || 0)
     } catch { /* mock */ }
     finally { setLoading(false) }
   }
 
   // Agent yoki filter o'zgarganda darhol fetch
-  useEffect(() => { fetchLogs() }, [agentId, method, status])
+  useEffect(() => { fetchLogs() }, [agentId, method, status, page])
+  useEffect(() => { setPage(1) }, [agentId, method, status, from, to])
 
   const agentOptions = [
     { value:'', label:'All agents' },
@@ -201,6 +196,7 @@ export default function NginxLogs() {
 
   const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id)
 
+  const totalPages = Math.ceil(total / limit)
   return (
     <div style={{ minHeight:'100vh' }}>
 
@@ -352,9 +348,11 @@ export default function NginxLogs() {
           </thead>
           <tbody>
             {logs.map(log => {
-              const mStyle = METHOD_COLORS[log.method] || { bg:'rgba(100,116,139,0.15)', text:'#94a3b8' }
-              const sStyle = getStatusStyle(log.status)
-              const rowBg  = getRowBg(log.status)
+              const method = log.method?.toUpperCase()
+              const status = Number(log.status)
+              const mStyle = METHOD_COLORS[method] || { bg:'rgba(100,116,139,0.15)', text:'#94a3b8' }
+              const sStyle = getStatusStyle(status)
+              const rowBg  = getRowBg(status)
               const expanded = expandedId === log.id
 
               return (
@@ -370,22 +368,22 @@ export default function NginxLogs() {
                     onMouseEnter={e => { if (!expanded) e.currentTarget.style.background='rgba(30,41,59,0.3)' }}
                     onMouseLeave={e => { if (!expanded) e.currentTarget.style.background=rowBg }}
                   >
-                    <td style={{ ...S.td, color: log.status >= 400 ? (log.status >= 500 ? '#fca5a5' : '#fcd34d') : '#64748b' }}>
+                    <td style={{ ...S.td, color: status >= 400 ? (status >= 500 ? '#fca5a5' : '#fcd34d') : '#64748b' }}>
                       {formatTime(log.log_time)}
                     </td>
                     <td style={S.td}>
-                      <Badge label={log.method} bg={mStyle.bg} text={mStyle.text} />
+                      <Badge label={method} bg={mStyle.bg} text={mStyle.text} />
                     </td>
                     <td style={S.td}>
                       <Badge label={log.status} bg={sStyle.bg} text={sStyle.text} />
                     </td>
-                    <td style={{ ...S.td, color: log.status >= 400 ? (log.status >= 500 ? '#fca5a5' : '#fcd34d') : '#e2e8f0' }}>
+                    <td style={{ ...S.td, color: status >= 400 ? (status >= 500 ? '#fca5a5' : '#fcd34d') : '#e2e8f0' }}>
                       {log.path}
                     </td>
                     <td style={S.td}>{log.ip_address}</td>
                     <td style={S.td}>{log.bytes.toLocaleString()}</td>
                     <td style={S.td}>
-                      <Badge label={log.agent_id} bg='rgba(100,116,139,0.12)' text='#94a3b8' />
+                      <Badge label={log.agent_name} bg='rgba(100,116,139,0.12)' text='#94a3b8' />
                     </td>
                     <td style={{ ...S.td, color:'#475569', textAlign:'center' }}>
                       <span style={{ transition:'transform 0.2s', display:'inline-block', transform: expanded ? 'rotate(90deg)' : 'none' }}>›</span>
@@ -397,15 +395,15 @@ export default function NginxLogs() {
                     <tr key={`${log.id}-detail`} style={{ borderBottom:'1px solid rgba(30,41,59,0.5)' }}>
                       <td colSpan={8} style={{ padding:'0 16px 14px' }}>
                         <div style={{
-                          background: log.status >= 500 ? '#1a0a0a' : log.status >= 400 ? '#1a1400' : '#0a1020',
-                          border: `1px solid ${log.status >= 500 ? 'rgba(239,68,68,0.2)' : log.status >= 400 ? 'rgba(245,158,11,0.2)' : 'rgba(99,102,241,0.2)'}`,
+                          background: status >= 500 ? '#1a0a0a' : status >= 400 ? '#1a1400' : '#0a1020',
+                          border: `1px solid ${status >= 500 ? 'rgba(239,68,68,0.2)' : status >= 400 ? 'rgba(245,158,11,0.2)' : 'rgba(99,102,241,0.2)'}`,
                           borderRadius:'8px', padding:'12px 16px',
                           fontFamily:'monospace', fontSize:'11px', lineHeight:2,
-                          color: log.status >= 500 ? '#fca5a5' : log.status >= 400 ? '#fcd34d' : '#94a3b8',
+                          color: status >= 500 ? '#fca5a5' : status >= 400 ? '#fcd34d' : '#94a3b8',
                         }}>
                           <span style={{ color:'#64748b' }}>ip_address: </span>{log.ip_address}<br/>
                           <span style={{ color:'#64748b' }}>method: </span>
-                          <span style={{ color: METHOD_COLORS[log.method]?.text }}>{log.method}</span><br/>
+                          <span style={{ color: METHOD_COLORS[method]?.text }}>{method}</span><br/>
                           <span style={{ color:'#64748b' }}>path: </span>
                           <span style={{ color:'#e2e8f0' }}>{log.path}</span><br/>
                           <span style={{ color:'#64748b' }}>status: </span>
@@ -415,7 +413,7 @@ export default function NginxLogs() {
                           <span style={{ color:'#a5b4fc' }}>{log.user_agent}</span><br/>
                           <span style={{ color:'#64748b' }}>log_time: </span>{log.log_time}<br/>
                           <span style={{ color:'#64748b' }}>agent_id: </span>
-                          <span style={{ color:'#818cf8' }}>{log.agent_id}</span>
+                          <span style={{ color:'#818cf8' }}>{log.agent_name}</span>
                         </div>
                       </td>
                     </tr>
@@ -425,6 +423,73 @@ export default function NginxLogs() {
             })}
           </tbody>
         </table>
+
+        {/* Pagination */}
+        <div style={{
+          display:'flex',
+          justifyContent:'space-between',
+          alignItems:'center',
+          padding:'12px 16px',
+          borderTop:'1px solid #1e293b'
+        }}>
+          <span style={{ fontSize:'11px', color:'#475569', fontFamily:'monospace' }}>
+            Page {page} of {totalPages}
+          </span>
+
+          <div style={{ display:'flex', gap:'6px' }}>
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              style={{
+                padding:'6px 12px',
+                fontSize:'11px',
+                borderRadius:'6px',
+                border:'1px solid #1e293b',
+                background: page === 1 ? 'rgba(255,255,255,0.05)' : 'rgba(234,179,8,0.08)',
+                color: page === 1 ? '#475569' : '#facc15',
+                cursor: page === 1 ? 'not-allowed' : 'pointer',
+                fontFamily:'monospace',
+                transition:'all 0.2s ease',
+              }}
+
+              onMouseEnter={e => {
+                if (page > 1) e.currentTarget.style.background = 'rgba(250,204,21,0.15)'
+              }}
+
+              onMouseLeave={e => {
+                if (page > 1) e.currentTarget.style.background = 'rgba(234,179,8,0.08)'
+              }}
+            >
+              Prev
+            </button>
+
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              style={{
+                padding:'6px 12px',
+                fontSize:'11px',
+                borderRadius:'6px',
+                border:'1px solid #1e293b',
+                background: page === totalPages ? 'rgba(255,255,255,0.05)' : 'rgba(234,179,8,0.08)',
+                color: page === totalPages ? '#475569' : '#facc15',
+                cursor: page === totalPages ? 'not-allowed' : 'pointer',
+                fontFamily:'monospace',
+                transition:'all 0.2s ease',
+              }}   
+              
+              onMouseEnter={ e => {
+                if (page != totalPages) e.currentTarget.style.background = 'rgba(250,204,21,0.15)'
+              }}
+
+              onMouseMove={ e => {
+                if (page != totalPages) e.currentTarget.style.background = 'rgba(234,179,8,0.08)'
+              }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
 
         {logs.length === 0 && (
           <div style={{ padding:'48px', textAlign:'center', color:'#334155', fontFamily:'monospace', fontSize:'13px' }}>

@@ -3,6 +3,9 @@ package app
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
+	"time"
 
 	"log/slog"
 
@@ -22,15 +25,23 @@ type App struct {
 	eventCh  chan models.Event
 }
 
-func New() (*App, error) {
+func New(apiKey, server, name string) (*App, error) {
 	cfg, err := config.Load("config.yaml")
 	if err != nil {
 		return nil, fmt.Errorf("config: %w", err)
 	}
 
-	// agent_id bo'sh bo'lsa — register qilamiz
-	if cfg.AgentID == "" {
-		res, err := clients.Register(cfg.ServerURL, models.RegisterRequest{
+	if name != "" {
+		cfg.AgentName = name
+	} else if cfg.AgentName == "" {
+		hostname, _ := os.Hostname()
+		cfg.AgentName = fmt.Sprintf("%s-%s", hostname, pkg.GetLocalIP())
+
+	}
+
+	// API Key bo'sh bo'lsa — register qilamiz
+	if cfg.APIKey == "" {
+		resp, err := clients.Register(server, apiKey, models.RegisterRequest{
 			Name:      cfg.AgentName,
 			IPAddress: pkg.GetLocalIP(),
 		})
@@ -38,8 +49,11 @@ func New() (*App, error) {
 			return nil, fmt.Errorf("register: %w", err)
 		}
 
-		cfg.AgentID = res.AgentID.String()
-		cfg.APIKey = res.APIKey
+		cfg.AgentID = resp.AgentID.String()
+		cfg.APIKey = apiKey
+		cfg.ServerURL = server
+		cfg.KafkaBrokers = resp.KafkaBrokers
+		cfg.KafkaTopic = resp.KafkaTopic
 
 		// config.yaml ga yozamiz
 		if err := config.Save("config.yaml", cfg); err != nil {
@@ -49,7 +63,7 @@ func New() (*App, error) {
 		slog.Info("agent registered", "agent_id", cfg.AgentID)
 	}
 
-    //  Kafka producer
+	//  Kafka producer
 	prod, err := producer.New(cfg.KafkaBrokers)
 	if err != nil {
 		return nil, fmt.Errorf("kafka: %w", err)
@@ -81,4 +95,21 @@ func (a *App) Close() {
 	if err := a.producer.Close(); err != nil {
 		slog.Warn("producer close failed", "err", err)
 	}
+}
+
+func (a *App) Heartbeat() {
+	ticker := time.NewTicker(30 * time.Second) // har 30s
+	defer ticker.Stop()
+	go func() {
+		for {
+			err := clients.SendHeartbeat(a.cfg)
+			if err != nil {
+				log.Println("heartbeat error:", err)
+			} else {
+				log.Println("heartbeat sent")
+			}
+
+			<-ticker.C
+		}
+	}()
 }

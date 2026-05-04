@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, use } from 'react'
 import api from '../api/axios'
 
 const SEV_STYLE = {
@@ -6,15 +6,6 @@ const SEV_STYLE = {
   warning:  { bg:'rgba(245,158,11,0.15)', text:'#fcd34d', row:'rgba(245,158,11,0.05)', dot:'#f59e0b' },
   high:     { bg:'rgba(168,85,247,0.15)', text:'#d8b4fe', row:'rgba(168,85,247,0.05)', dot:'#a855f7' },
 }
-
-const mockAlerts = [
-  { id:'1', severity:'critical', type:'auth_failure', message:'SSH brute force — 120 failed attempts', agent_id:'nginx-01', created_at:'2024-01-25T14:32:00Z', is_read:false },
-  { id:'2', severity:'warning',  type:'high_memory',  message:'RAM usage exceeded 90% threshold',      agent_id:'app-01',   created_at:'2024-01-25T14:29:00Z', is_read:false },
-  { id:'3', severity:'high',     type:'rate_limit',   message:'Rate limit exceeded: 1200 req/min',     agent_id:'nginx-01', created_at:'2024-01-25T14:25:00Z', is_read:false },
-  { id:'4', severity:'critical', type:'auth_failure', message:'Failed login from unknown IP',          agent_id:'nginx-02', created_at:'2024-01-25T14:20:00Z', is_read:true  },
-  { id:'5', severity:'warning',  type:'disk_space',   message:'Disk usage exceeded 80% threshold',     agent_id:'app-01',   created_at:'2024-01-25T14:15:00Z', is_read:true  },
-  { id:'6', severity:'high',     type:'cpu_spike',    message:'CPU usage spiked to 95% for 5 minutes', agent_id:'app-02',   created_at:'2024-01-25T14:10:00Z', is_read:true  },
-]
 
 function formatTime(iso) {
   return new Date(iso).toLocaleString('en', {
@@ -114,7 +105,7 @@ const S = {
 }
 
 export default function Alerts() {
-  const [alerts, setAlerts]           = useState(mockAlerts)
+  const [alerts, setAlerts]           = useState([])
   const [agents, setAgents]           = useState([])
   const [agentId, setAgentId]         = useState('')
   const [severity, setSeverity]       = useState('')
@@ -124,6 +115,10 @@ export default function Alerts() {
   const [loading, setLoading]         = useState(false)
   const [markingId, setMarkingId]     = useState(null)
   const [selectedAlert, setSelectedAlert] = useState(null)
+  const [total, setTotal]             = useState(0)
+
+  const [page, setPage] = useState(1)
+  const limit = 30
 
   const counts = {
     critical: alerts.filter(a => a.severity === 'critical').length,
@@ -135,8 +130,10 @@ export default function Alerts() {
   useEffect(() => {
     const fetchAgents = async () => {
       try {
-        const res = await api.get('/sentinel/api/agents')
-        if (Array.isArray(res.data)) setAgents(res.data)
+        const res = await api.get('/agents')
+        const agentsData = res.data?.data || []
+        
+        setAgents(agentsData)
       } catch { /* mock */ }
     }
     fetchAgents()
@@ -151,20 +148,25 @@ export default function Alerts() {
       if (isRead !== '') params.append('is_read', isRead)
       if (from)       params.append('from', from)
       if (to)         params.append('to', to)
-      params.append('limit', 50)
+      params.append('limit', limit)
+      params.append('page', page)
 
-      const res = await api.get(`/sentinel/api/alerts?${params}`)
-      if (Array.isArray(res.data)) setAlerts(res.data)
+      const res = await api.get(`/alerts?${params}`)
+      const alertData = res.data?.data || []
+
+      setAlerts(alertData)
+      setTotal(res.data?.total || 0)
     } catch { /* mock */ }
     finally { setLoading(false) }
   }
 
-  useEffect(() => { fetchAlerts() }, [agentId, severity, isRead])
+  useEffect(() => { fetchAlerts() }, [agentId, severity, isRead, page])
+  useEffect(() => { setPage(1) }, [agentId, severity, isRead, from, to])
 
   const markRead = async (id) => {
     setMarkingId(id)
     try {
-      await api.put(`/sentinel/api/alerts/${id}/markread`)
+      await api.put(`/alerts/${id}/markread`)
       setAlerts(prev => prev.map(a => a.id === id ? { ...a, is_read:true } : a))
     } catch {
       setAlerts(prev => prev.map(a => a.id === id ? { ...a, is_read:true } : a))
@@ -190,6 +192,7 @@ export default function Alerts() {
     { value:'true',  label:'Read',   dot:'#475569' },
   ]
 
+  const totalPages = Math.ceil(total / limit)
   return (
     <div style={{ minHeight:'100vh' }}>
 
@@ -251,7 +254,7 @@ export default function Alerts() {
                 { label:'Severity', value: selectedAlert.severity, color: SEV_STYLE[selectedAlert.severity]?.text },
                 { label:'Type',     value: selectedAlert.type },
                 { label:'Message',  value: selectedAlert.message },
-                { label:'Agent',    value: selectedAlert.agent_id, color:'#a5b4fc' },
+                { label:'Agent',    value: selectedAlert.agent_name, color:'#a5b4fc' },
                 { label:'Created',  value: new Date(selectedAlert.created_at).toLocaleString('en') },
                 { label:'Status',   value: selectedAlert.is_read ? 'Read' : 'Unread', color: selectedAlert.is_read ? '#475569' : '#60a5fa' },
               ].map((f, i, arr) => (
@@ -491,12 +494,12 @@ export default function Alerts() {
                   </td>
                   <td style={{ ...S.td, color:'#64748b' }}>{formatTime(alert.created_at)}</td>
                   <td style={S.td}>
-                    <Badge label={alert.severity} bg={s.bg} text={s.text}/>
+                    <Badge label={alert.severity?.toUpperCase()} bg={s.bg} text={s.text}/>
                   </td>
                   <td style={{ ...S.td, color:'#cbd5e1' }}>{alert.type}</td>
                   <td style={{ ...S.td, color:s.text }}>{alert.message}</td>
                   <td style={S.td}>
-                    <Badge label={alert.agent_id} bg='rgba(100,116,139,0.12)' text='#94a3b8'/>
+                    <Badge label={alert.agent_name} bg='rgba(100,116,139,0.12)' text='#94a3b8'/>
                   </td>
                   <td style={S.td}>
                     {alert.is_read
@@ -530,6 +533,73 @@ export default function Alerts() {
             })}
           </tbody>
         </table>
+
+        {/* Pagination */}
+        <div style={{
+          display:'flex',
+          justifyContent:'space-between',
+          alignItems:'center',
+          padding:'12px 16px',
+          borderTop:'1px solid #1e293b'
+        }}>
+          <span style={{ fontSize:'11px', color:'#475569', fontFamily:'monospace' }}>
+            Page {page} of {totalPages}
+          </span>
+
+          <div style={{ display:'flex', gap:'6px' }}>
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              style={{
+                padding:'6px 12px',
+                fontSize:'11px',
+                borderRadius:'6px',
+                border:'1px solid #1e293b',
+                background: page === 1 ? 'rgba(255,255,255,0.05)' : 'rgba(234,179,8,0.08)',
+                color: page === 1 ? '#475569' : '#facc15',
+                cursor: page === 1 ? 'not-allowed' : 'pointer',
+                fontFamily:'monospace',
+                transition:'all 0.2s ease',
+              }}
+
+              onMouseEnter={e => {
+                if (page > 1) e.currentTarget.style.background = 'rgba(250,204,21,0.15)'
+              }}
+
+              onMouseLeave={e => {
+                if (page > 1) e.currentTarget.style.background = 'rgba(234,179,8,0.08)'
+              }}
+            >
+              Prev
+            </button>
+
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              style={{
+                padding:'6px 12px',
+                fontSize:'11px',
+                borderRadius:'6px',
+                border:'1px solid #1e293b',
+                background: page === totalPages ? 'rgba(255,255,255,0.05)' : 'rgba(234,179,8,0.08)',
+                color: page === totalPages ? '#475569' : '#facc15',
+                cursor: page === totalPages ? 'not-allowed' : 'pointer',
+                fontFamily:'monospace',
+                transition:'all 0.2s ease',
+              }}   
+              
+              onMouseEnter={ e => {
+                if (page != totalPages) e.currentTarget.style.background = 'rgba(250,204,21,0.15)'
+              }}
+
+              onMouseMove={ e => {
+                if (page != totalPages) e.currentTarget.style.background = 'rgba(234,179,8,0.08)'
+              }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
 
         {alerts.length === 0 && (
           <div style={{ padding:'48px', textAlign:'center', color:'#334155', fontFamily:'monospace', fontSize:'13px' }}>

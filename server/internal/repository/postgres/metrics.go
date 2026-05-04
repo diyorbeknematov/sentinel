@@ -19,28 +19,28 @@ func NewMetricRepo(db *sqlx.DB) *metricRepo {
 }
 
 func (r *metricRepo) CreateMetric(metric models.CreateMetric) (uuid.UUID, error) {
-	id := uuid.New()
-
 	query := `
 	INSERT INTO metrics (
 		id,
 		agent_id,
 		cpu,
 		ram,
-		disk
-	) VALUES ($1, $2, $3, $4, $5);
+		disk,
+		log_time
+	) VALUES ($1, $2, $3, $4, $5, $6);
 	`
 	if _, err := r.db.Exec(query,
-		id,
+		metric.Id,
 		metric.AgentId,
 		metric.CPU,
 		metric.RAM,
 		metric.Disk,
+		metric.LogTime,
 	); err != nil {
 		return uuid.Nil, err
 	}
 
-	return id, nil
+	return metric.Id, nil
 }
 
 func (r *metricRepo) GetMetricsByID(id uuid.UUID) (models.Metric, error) {
@@ -52,6 +52,7 @@ func (r *metricRepo) GetMetricsByID(id uuid.UUID) (models.Metric, error) {
 		cpu,
 		ram,
 		disk,
+		log_time,
 		recorded_at
 	FROM metrics
 	WHERE id = $1
@@ -63,6 +64,7 @@ func (r *metricRepo) GetMetricsByID(id uuid.UUID) (models.Metric, error) {
 		&metric.CPU,
 		&metric.RAM,
 		&metric.Disk,
+		&metric.LogTime,
 		&metric.RecordedAt,
 	); err != nil {
 		return models.Metric{}, err
@@ -71,19 +73,26 @@ func (r *metricRepo) GetMetricsByID(id uuid.UUID) (models.Metric, error) {
 	return metric, nil
 }
 
-func (r *metricRepo) ListMetrics(filter models.FilterMetrics) ([]models.Metric, int, error) {
+func (r *metricRepo) ListMetrics(filter models.FilterMetricsDB) ([]models.MetricResponse, int, error) {
 	baseQuery := `
 	SELECT 
-		id,
-		agent_id,
-		cpu,
-		ram,
-		disk,
-		recorded_at
-	FROM metrics
+		m.id,
+		a.name AS agent_name,
+		m.cpu,
+		m.ram,
+		m.disk,
+		m.log_time,
+		m.recorded_at
+	FROM metrics m
+	LEFT JOIN agents a ON m.agent_id = a.id
 	WHERE TRUE 
 	`
-	countQuery := `SELECT COUNT(id) FROM metrics WHERE TRUE `
+	countQuery := `
+	SELECT 
+		COUNT(m.id) 
+	FROM metrics m
+	LEFT JOIN agents a ON m.agent_id = a.id
+	WHERE TRUE `
 
 	conditions := []string{}
 	params := map[string]any{
@@ -123,15 +132,16 @@ func (r *metricRepo) ListMetrics(filter models.FilterMetrics) ([]models.Metric, 
 	}
 	defer rows.Close()
 
-	var metrics []models.Metric
+	var metrics []models.MetricResponse
 	for rows.Next() {
-		var m models.Metric
+		var m models.MetricResponse
 		if err := rows.Scan(
 			&m.Id,
-			&m.AgentId,
+			&m.AgentName,
 			&m.CPU,
 			&m.RAM,
 			&m.Disk,
+			&m.LogTime,
 			&m.RecordedAt,
 		); err != nil {
 

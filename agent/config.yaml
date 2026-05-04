@@ -1,10 +1,14 @@
 agent_name: server-prod-01
-agent_id: af6dabe9-cc13-43b5-951e-f8e15d05749a
-api_key: Qs3coKl8Dhnm_bUxDYwO9_6sTuxNn_N7M08lPQY3SDI=
+agent_id: 5b400b42-170a-4fea-8751-ecd7abd7dde6
+api_key: sk_6a9eaad7aed109ff9e1debdffdc17d19d2a9c108ecb9c8f2e1c7269eedf40ba1
+
+# server url
 server_url: http://localhost:8081
-app_log: /var/log/myapp/app.log
-nginx_log: /var/log/nginx/access.log
 metrics_interval: 5s
 kafka_brokers:
     - localhost:9094
 kafka_topic: sentinel-topic
+
+# logs files url
+app_log: /var/log/myapp/app.log
+nginx_log: /var/log/nginx/access.log

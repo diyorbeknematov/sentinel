@@ -3,7 +3,6 @@ package service
 import (
 	"database/sql"
 	"errors"
-	"log/slog"
 
 	"github.com/diyorbek/sentinel/internal/config"
 	"github.com/diyorbek/sentinel/internal/models"
@@ -13,20 +12,19 @@ import (
 )
 
 type metricService struct {
-	repo   *repository.Repository
-	cfg    *config.Config
-	logger *slog.Logger
+	repo *repository.Repository
+	cfg  *config.Config
 }
 
-func NewMetricService(repo *repository.Repository, cfg *config.Config, logger *slog.Logger) *metricService {
+func NewMetricService(repo *repository.Repository, cfg *config.Config) *metricService {
 	return &metricService{
-		repo:   repo,
-		cfg:    cfg,
-		logger: logger,
+		repo: repo,
+		cfg:  cfg,
 	}
 }
 
 func (s *metricService) CreateMetric(metric models.CreateMetric) (uuid.UUID, error) {
+	metric.Id = uuid.New()
 	id, err := s.repo.Metric.CreateMetric(metric)
 	if err != nil {
 		return uuid.Nil, apperrors.Internal(err)
@@ -35,8 +33,13 @@ func (s *metricService) CreateMetric(metric models.CreateMetric) (uuid.UUID, err
 	return id, nil
 }
 
-func (s *metricService) GetMetricsByID(id uuid.UUID) (models.Metric, error) {
-	metric, err := s.repo.Metric.GetMetricsByID(id)
+func (s *metricService) GetMetricsByID(id string) (models.Metric, error) {
+	UId, err := uuid.Parse(id)
+	if err != nil {
+		return models.Metric{}, apperrors.BadRequest("noto'g'ri UUID format")
+	}
+
+	metric, err := s.repo.Metric.GetMetricsByID(UId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return models.Metric{}, apperrors.NotFound("Metric topilmadi", err)
@@ -47,13 +50,28 @@ func (s *metricService) GetMetricsByID(id uuid.UUID) (models.Metric, error) {
 	return metric, nil
 }
 
-func (s *metricService) ListMetrics(filter models.FilterMetrics) ([]models.Metric, int, error) {
-	metrics, total, err := s.repo.Metric.ListMetrics(filter)
+func (s *metricService) ListMetrics(filter models.FilterMetrics) ([]models.MetricResponse, int, error) {
+	agentUId := uuid.Nil
+	if filter.AgentId != "" {
+		agentId, err := uuid.Parse(filter.AgentId)
+		if err != nil {
+			return []models.MetricResponse{}, 0, apperrors.BadRequest("noto'g'ri UUID format")
+		}
+		agentUId = agentId
+	}
+
+	metrics, total, err := s.repo.Metric.ListMetrics(models.FilterMetricsDB{
+		AgentId: agentUId,
+		From:    filter.From,
+		To:      filter.To,
+		Limit:   filter.Limit,
+		Offset:  filter.Offset,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return []models.Metric{}, 0, apperrors.NotFound("Metric topilmadi", err)
+			return []models.MetricResponse{}, 0, apperrors.NotFound("Metric topilmadi", err)
 		}
-		return []models.Metric{}, 0, apperrors.Internal(err)
+		return []models.MetricResponse{}, 0, apperrors.Internal(err)
 	}
 
 	return metrics, total, nil

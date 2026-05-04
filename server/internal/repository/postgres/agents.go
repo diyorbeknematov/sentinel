@@ -24,30 +24,28 @@ func NewAgentRepo(db *sqlx.DB) *agentRepo {
 	}
 }
 
-func (r *agentRepo) CreateAgent(agent models.CreateAgent) (uuid.UUID, error) {
-	id := uuid.New()
-
+func (r *agentRepo) CreateAgent(agent models.CreateAgentDB) (uuid.UUID, error) {
 	query := `
 		INSERT INTO agents (
 		id,
+		account_id,
 		name,
-		api_key,
 		ip_address,
 		last_seen
 		) VALUES ($1, $2, $3, $4, $5);
 	`
 
 	if _, err := r.db.Exec(query,
-		id,
+		agent.Id,
+		agent.AccountID,
 		agent.Name,
-		agent.APIKey,
 		agent.IPAddress,
 		agent.LastSeen,
 	); err != nil {
 		return uuid.Nil, err
 	}
 
-	return id, nil
+	return agent.Id, nil
 }
 
 func (r *agentRepo) GetAgentByID(id uuid.UUID) (models.Agent, error) {
@@ -56,8 +54,8 @@ func (r *agentRepo) GetAgentByID(id uuid.UUID) (models.Agent, error) {
 	query := `
 	SELECT 
 		id,
+		account_id,
 		name,
-		api_key,
 		ip_address,
 		last_seen,
 		created_at
@@ -66,8 +64,8 @@ func (r *agentRepo) GetAgentByID(id uuid.UUID) (models.Agent, error) {
 	`
 	if err := r.db.QueryRow(query, id).Scan(
 		&agent.Id,
+		&agent.AccountID,
 		&agent.Name,
-		&agent.APIKey,
 		&agent.IPAddress,
 		&agent.LastSeen,
 		&agent.CreatedAt,
@@ -80,45 +78,12 @@ func (r *agentRepo) GetAgentByID(id uuid.UUID) (models.Agent, error) {
 	return agent, nil
 }
 
-func (r *agentRepo) GetAgentByAPIKey(apiKey string) (models.Agent, error) {
-	var agent models.Agent
-
-	query := `
-	SELECT
-		id,
-		name,
-		api_key,
-		ip_address,
-		last_seen,
-		created_at
-	FROM agents
-	WHERE api_key = $1;
-	`
-
-	if err := r.db.QueryRow(query, apiKey).Scan(
-		&agent.Id,
-		&agent.Name,
-		&agent.APIKey,
-		&agent.IPAddress,
-		&agent.LastSeen,
-		&agent.CreatedAt,
-	); err != nil {
-		if errors.Is(sql.ErrNoRows, err) {
-			return models.Agent{}, err
-		}
-
-		return models.Agent{}, err
-	}
-
-	return agent, nil
-}
-
-func (r *agentRepo) ListAgents(filter models.FilterAgent) ([]models.Agent, int, error) {
+func (r *agentRepo) ListAgents(filter models.FilterAgentDB) ([]models.Agent, int, error) {
 	baseQuery := `
 	SELECT
 		id,
+		account_id,
 		name,
-		api_key,
 		ip_address,
 		last_seen,
 		created_at
@@ -134,6 +99,11 @@ func (r *agentRepo) ListAgents(filter models.FilterAgent) ([]models.Agent, int, 
 	}
 
 	// Add search condition
+	if filter.AccountID != uuid.Nil {
+		conditions = append(conditions, "account_id = :accountId")
+		params["accountId"] = filter.AccountID
+	}
+
 	if filter.Name != "" {
 		conditions = append(conditions, "name ILIKE :name")
 		params["name"] = "%" + filter.Name + "%"
@@ -156,7 +126,11 @@ func (r *agentRepo) ListAgents(filter models.FilterAgent) ([]models.Agent, int, 
 	}
 
 	// Pagination
-	baseQuery += " ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
+	if filter.Limit > 0 {
+		baseQuery += " ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
+	} else {
+		baseQuery += " ORDER BY created_at DESC"
+	}
 
 	rows, err := r.db.NamedQuery(baseQuery, params)
 	if err != nil {
@@ -169,8 +143,8 @@ func (r *agentRepo) ListAgents(filter models.FilterAgent) ([]models.Agent, int, 
 		var a models.Agent
 		if err := rows.Scan(
 			&a.Id,
+			&a.AccountID,
 			&a.Name,
-			&a.APIKey,
 			&a.IPAddress,
 			&a.LastSeen,
 			&a.CreatedAt,

@@ -6,8 +6,25 @@ const SIDEBAR_WIDTH = 220
 
 const navItems = [
   {
+    to: '/home', label: 'Home',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+    ),
+  },
+  {
     to: '/', label: 'Dashboard',
     icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>,
+  },
+  {
+    to: '/agents', label: 'Agents',
+    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="4" y="4" width="16" height="6" rx="2"/>
+          <rect x="4" y="14" width="16" height="6" rx="2"/>
+          <circle cx="8" cy="7" r="1"/>
+          <circle cx="8" cy="17" r="1"/>
+        </svg>
   },
   {
     to: '/nginx-logs', label: 'Nginx Logs',
@@ -27,17 +44,16 @@ export default function Layout() {
   const navigate = useNavigate()
   const [unreadCount, setUnreadCount] = useState(0)
   const [openUser, setOpenUser] = useState(false)
+  const [user, setUser] = useState(null)
   const userRef = useRef()
 
   useEffect(() => {
     const fetchUnread = async () => {
       try {
-        const res = await api.get('/sentinel/api/alerts?limit=100')
-        if (Array.isArray(res.data)) {
-          setUnreadCount(res.data.filter(a => !a.is_read).length)
-        }
+        const res = await api.get('/alerts?is_read=false')
+        setUnreadCount(Number(res.data.total) || 0) // unread alertlar sonini total dan olamiz
       } catch {
-        setUnreadCount(5)
+        setUnreadCount(0)
       }
     }
     fetchUnread()
@@ -49,6 +65,19 @@ export default function Layout() {
     const h = (e) => { if (userRef.current && !userRef.current.contains(e.target)) setOpenUser(false) }
     document.addEventListener('mousedown', h)
     return () => document.removeEventListener('mousedown', h)
+  }, [])
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await api.get('/me')
+        setUser(res.data)
+      } catch {
+        setUser(null)
+      }
+    }
+
+    fetchUser()
   }, [])
 
   const logout = () => {
@@ -143,8 +172,12 @@ export default function Layout() {
               fontSize:'11px', fontWeight:'600', color:'#c4b5fd',
             }}>A</div>
             <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:'13px', fontWeight:'500', color:'#e2e8f0' }}>Admin</div>
-              <div style={{ fontSize:'11px', color:'#475569', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>admin@local</div>
+              <div style={{ fontSize:'13px', fontWeight:'500', color:'#e2e8f0' }}>
+                <div>{user?.username || 'Loading...' }</div>
+              </div>
+              <div style={{ fontSize:'11px', color:'#475569', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                <div>{user?.role || 'Admin'}</div>
+              </div>
             </div>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
               <polyline points="6 9 12 15 18 9"/>
@@ -159,12 +192,31 @@ export default function Layout() {
               boxShadow:'0 -8px 24px rgba(0,0,0,0.4)',
             }}>
               <div
+                onClick={() => {
+                  navigate('/profile')
+                  setOpenUser(false)
+                }}
+                style={{
+                  display:'flex', alignItems:'center', gap:'8px',
+                  padding:'8px 12px', borderRadius:'6px',
+                  fontSize:'13px', color:'#cbd5f5', cursor:'pointer',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background='rgba(99,102,241,0.1)'}
+                onMouseLeave={e => e.currentTarget.style.background='transparent'}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="7" r="4"/>
+                  <path d="M5.5 21a6.5 6.5 0 0 1 13 0"/>
+                </svg>
+                Profile
+              </div>
+
+              <div
                 onClick={logout}
                 style={{
                   display:'flex', alignItems:'center', gap:'8px',
                   padding:'8px 12px', borderRadius:'6px',
                   fontSize:'13px', color:'#f87171', cursor:'pointer',
-                  transition:'background 0.15s',
                 }}
                 onMouseEnter={e => e.currentTarget.style.background='rgba(239,68,68,0.1)'}
                 onMouseLeave={e => e.currentTarget.style.background='transparent'}

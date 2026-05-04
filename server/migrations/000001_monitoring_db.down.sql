@@ -1,6 +1,3 @@
--- users jadvali
-DROP TABLE IF EXISTS users;
-
 -- applogs jadvali
 DROP TABLE IF EXISTS applogs;
 
@@ -15,3 +12,6 @@ DROP TABLE IF EXISTS alerts;
 
 -- agents jadvali
 DROP TABLE IF EXISTS agents;
+
+-- accounts jadvali
+DROP TABLE IF EXISTS accounts;

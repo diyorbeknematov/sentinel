@@ -1,12 +1,14 @@
 package service
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/diyorbek/sentinel/internal/config"
+	"github.com/diyorbek/sentinel/internal/mailer"
 	"github.com/diyorbek/sentinel/internal/models"
 	"github.com/diyorbek/sentinel/internal/repository"
 	"github.com/diyorbek/sentinel/pkg/apperrors"
@@ -15,29 +17,29 @@ import (
 )
 
 type authService struct {
-	repo *repository.Repository
-	cfg  *config.Config
+	repo   *repository.Repository
+	mailer *mailer.Mailer
+	cfg    *config.Config
 }
 
 type jwtCustomClaim struct {
 	jwt.StandardClaims
-	UserId uuid.UUID `json:"user_id"`
-	Role   string    `json:"role"`
-	Type   string    `json:"type"`
+	AccountID uuid.UUID `json:"user_id"`
+	Type      string    `json:"type"`
 }
 
-func NewAuthService(repo *repository.Repository, cfg *config.Config) *authService {
+func NewAuthService(repo *repository.Repository, cfg *config.Config, mail *mailer.Mailer) *authService {
 	return &authService{
-		repo: repo,
-		cfg:  cfg,
+		repo:   repo,
+		mailer: mail,
+		cfg:    cfg,
 	}
 }
 
-func (s *authService) CreateToken(user models.User, tokenType string, expiresAt time.Time) (*models.Token, error) {
+func (s *authService) CreateToken(account models.Account, tokenType string, expiresAt time.Time) (*models.Token, error) {
 	claims := jwtCustomClaim{
-		UserId: user.Id,
-		Role:   user.Role,
-		Type:   tokenType,
+		AccountID: account.Id,
+		Type:      tokenType,
 		StandardClaims: jwt.StandardClaims{
 			IssuedAt:  time.Now().Unix(),
 			ExpiresAt: expiresAt.Unix(),
@@ -59,16 +61,16 @@ func (s *authService) CreateToken(user models.User, tokenType string, expiresAt 
 	}, nil
 }
 
-func (s *authService) GenerateTokens(user models.User) (*models.Token, *models.Token, error) {
+func (s *authService) GenerateTokens(account models.Account) (*models.Token, *models.Token, error) {
 	accessExpiresAt := time.Now().Add(time.Hour)
 	refreshExpiresAt := time.Now().Add(24 * time.Hour)
 
-	accessToken, err := s.CreateToken(user, "access_token", accessExpiresAt)
+	accessToken, err := s.CreateToken(account, "access_token", accessExpiresAt)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	refreshToken, err := s.CreateToken(user, "refresh_token", refreshExpiresAt)
+	refreshToken, err := s.CreateToken(account, "refresh_token", refreshExpiresAt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -88,6 +90,10 @@ func (s *authService) ParseToken(token string) (*jwtCustomClaim, error) {
 		return nil, err
 	}
 
+	if !jwtToken.Valid {
+		return nil, errors.New("invalid token")
+	}
+
 	claims, ok := jwtToken.Claims.(*jwtCustomClaim)
 	if !ok {
 		return nil, errors.New("token claims are not of type *jwtCustomClaim")
@@ -97,40 +103,41 @@ func (s *authService) ParseToken(token string) (*jwtCustomClaim, error) {
 }
 
 func (s *authService) Register(req models.Register) (*models.Token, *models.Token, error) {
-	// Check if the username already exists
-	_, err := s.repo.User.GetUserByUserName(req.UserName)
-	if err == nil {
-		return nil, nil, apperrors.BadRequest("The username is already existed")
-	} else if err != sql.ErrNoRows {
-		return nil, nil, apperrors.Internal(err)
-	}
-	
 	// hashing the password
-	hashedPass, err := HassPassword(req.Password)
+	hashedPass, err := HashPassword(req.Password)
 	if err != nil {
 		return nil, nil, err
 	}
 	req.Password = hashedPass
-	
-	userId, err := s.repo.User.CreateUser(models.CreateUser{
-		UserName: req.UserName,
-		Password: req.Password,
-		Role:     req.Role,
-	})
+
+	apiKey, err := generateAPIKey()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return s.GenerateTokens(models.User{
-		Id:       userId,
-		Role:     req.Role,
-		UserName: req.UserName,
+	userId, err := s.repo.Account.CreateAccount(models.CreateAccount{
+		Id:       uuid.New(),
+		Username: req.Username,
 		Password: req.Password,
+		Email:    req.Email,
+		APIKey:   apiKey,
+	})
+	if err != nil {
+		if isDuplicateError(err) {
+			return nil, nil, apperrors.BadRequest("email or username already exists")
+		}
+		return nil, nil, apperrors.Internal(err)
+	}
+	fmt.Println(userId)
+	return s.GenerateTokens(models.Account{
+		Id:       userId,
+		Email:    req.Email,
+		Username: req.Username,
 	})
 }
 
 func (s *authService) Login(req models.Login) (*models.Token, *models.Token, error) {
-	user, err := s.repo.User.GetUserByUserName(req.UserName)
+	user, err := s.repo.Account.GetByUsername(req.Username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil, apperrors.BadRequest("bunday foydanaluvchi nomi yo'q")
@@ -143,4 +150,77 @@ func (s *authService) Login(req models.Login) (*models.Token, *models.Token, err
 	}
 
 	return s.GenerateTokens(user)
+}
+
+func (s *authService) ForgotPassword(email string) error {
+	account, err := s.repo.Account.GetByEmail(email)
+	if err != nil {
+		return apperrors.Internal(err)
+	}
+
+	token := generateToken()
+
+	// DB ga saqlash (expiry bilan)
+	s.repo.RedisStore.SaveResetToken(context.Background(), token, account.Id.String())
+
+	link := fmt.Sprintf(
+		"%s/reset-password?token=%s",
+		s.cfg.FrontendURL,
+		token,
+	)
+
+	body := fmt.Sprintf(`
+Hello %s,
+
+Reset password link:
+%s
+
+This link expires in 15 minutes.
+`, account.Username, link)
+
+	return s.mailer.Send(account.Email, "Reset Password", body)
+}
+
+func (s *authService) ResetPassword(token string, newPassword string) error {
+	ctx := context.Background()
+
+	// 1. tokenni tekshirish
+	idStr, err := s.repo.RedisStore.GetResetToken(ctx, token)
+	if err != nil {
+		return apperrors.BadRequest("invalid or expired token")
+	}
+
+	userID, err := uuid.Parse(idStr)
+	if err != nil {
+		apperrors.BadRequest("noto'g'ri UUID format")
+	}
+
+	// 2. userni olish
+	account, err := s.repo.Account.GetByID(userID)
+	if err != nil {
+		return apperrors.Internal(err)
+	}
+
+	// 3. passwordni hash qilish
+	hashedPassword, err := HashPassword(newPassword)
+	if err != nil {
+		return apperrors.Internal(err)
+	}
+
+	// 4. update qilish
+	account.Password = hashedPassword
+	if err := s.repo.Account.UpdateAccount(models.UpdateAccountDB{
+		Id: userID,
+		Username: account.Username,
+		Password: account.Password,
+	}); err != nil {
+		return apperrors.Internal(err)
+	}
+
+	// 5. tokenni o‘chirish (security uchun MUHIM)
+	if err := s.repo.DeleteResetToken(ctx, token); err != nil {
+		return apperrors.Internal(err)
+	}
+
+	return nil
 }

@@ -6,37 +6,31 @@ import (
 
 	"github.com/diyorbek/sentinel/internal/models"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type nginxListResponse struct {
-	Data  []models.NginxLog `json:"data"`
-	Total int               `json:"total"`
-	Page  int               `json:"page"`
-	Limit int               `json:"limit"`
+	Data  []models.NginxLogResponse `json:"data"`
+	Total int                       `json:"total"`
+	Page  int                       `json:"page"`
+	Limit int                       `json:"limit"`
 }
 
-// @Description Get nginx log by id 
-// @Summary Get nginx log by id 
-// @Tags logs 
-// @Accept json 
-// @Produce json 
+// @Description Get nginx log by id
+// @Summary Get nginx log by id
+// @Tags logs
+// @Accept json
+// @Produce json
 // @Param id path string ture "nginx log id"
 // @Success 200 {object} models.NginxLog
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinel/api/nginxlogs/{id} [get]
+// @Router /sentinel/nginxlogs/{id} [get]
+// @Security BearerAuth
 func (h *Handler) GetNginxLogByID(ctx *gin.Context) {
-	paramValue := ctx.Param("id")
-	if paramValue == "" {
+	// get id from path param
+	id := ctx.Param("id")
+	if id == "" {
 		h.logger.Warn("empty param value")
 		errorResponse(ctx, http.StatusBadRequest, errors.New("param value is emtpy"))
-		return
-	}
-
-	id, err := uuid.Parse(paramValue)
-	if err != nil {
-		h.logger.Error(err.Error())
-		errorResponse(ctx, http.StatusBadRequest, errors.New("agent id is wrong"))
 		return
 	}
 
@@ -50,11 +44,11 @@ func (h *Handler) GetNginxLogByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, nginxLog)
 }
 
-// @Description get nginxlogs by filter 
-// @Summary get nginxlogs by filter 
-// @Tags logs 
-// @Accept json 
-// @Produce json 
+// @Description get nginxlogs by filter
+// @Summary get nginxlogs by filter
+// @Tags logs
+// @Accept json
+// @Produce json
 // @Param agent_id query string false "agent id"
 // @Pram method query string false "method"
 // @Param status query string false "status"
@@ -64,7 +58,8 @@ func (h *Handler) GetNginxLogByID(ctx *gin.Context) {
 // @Param page query int false "Page" default(1)
 // @Sucess 200 {object} nginxListResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinel/api/nginxlogs [get]
+// @Router /sentinel/nginxlogs [get]
+// @Security BearerAuth
 func (h *Handler) ListNginxLogs(ctx *gin.Context) {
 	var filter models.FilterNginxLog
 

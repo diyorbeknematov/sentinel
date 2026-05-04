@@ -8,6 +8,11 @@ type RegisterRequest struct {
 }
 
 type RegisterResponse struct {
-	AgentID uuid.UUID `json:"id"`
-	APIKey  string    `json:"api_key"`
+	AgentID      uuid.UUID `json:"id"`
+	KafkaBrokers []string  `json:"kafka_brokers"`
+	KafkaTopic   string    `json:"kafka_topic"`
+}
+
+type HeartbeatRequest struct {
+	AgentID string `json:"agent_id"`
 }

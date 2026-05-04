@@ -9,7 +9,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [metrics, setMetrics] = useState({
-    requests: 48392, errorRate: 2.7, alerts: 18, response: 142
+    requests: 0, errorRate: 0, alerts: 0, response: 0
   })
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export default function Login() {
     }
     setLoading(true)
     try {
-      const res = await api.post('/sentinel/login', form)
+      const res = await api.post('/login', form)
       const token = res.data.token || res.data.access_token
       if (token) {
         localStorage.setItem('sentinel_token', token)
@@ -132,7 +132,11 @@ export default function Login() {
                 <input type="checkbox" className="accent-indigo-500 w-3.5 h-3.5" />
                 <span className="text-xs text-slate-500">Remember me</span>
               </label>
-              <button type="button" className="text-xs text-indigo-400 hover:text-indigo-300 transition">
+              <button
+                type="button"
+                onClick={() => navigate('/forgot-password')}
+                className="text-xs text-indigo-400 hover:text-indigo-300 transition"
+              >
                 Parolni unutdingizmi?
               </button>
             </div>
@@ -150,6 +154,15 @@ export default function Login() {
               )}
               {loading ? 'Tekshirilmoqda...' : 'Kirish'}
             </button>
+            <p className="text-xs text-slate-500 text-center mt-4">
+              Account yo‘qmi?{' '}
+              <span
+                onClick={() => navigate('/register')}
+                className="text-indigo-400 hover:text-indigo-300 cursor-pointer"
+              >
+                Ro‘yxatdan o‘tish
+              </span>
+            </p>
           </form>
         </div>
 

@@ -10,9 +10,10 @@ import (
 )
 
 type createAgentResponse struct {
-	Id     uuid.UUID `json:"id"`
-	APIKey string    `json:"api_key"`
-	Messge string    `json:"message"`
+	Id           uuid.UUID `json:"id"`
+	KafkaBrokers []string  `json:"kafka_brokers"`
+	KafkaTopic   string    `json:"kafka_topic"`
+	Message      string    `json:"message"`
 }
 
 type agentListResponse struct {
@@ -30,7 +31,8 @@ type agentListResponse struct {
 // @Param create body models.CreateAgent true "Create Agent"
 // @Success 201 {object} createAgentResponse
 // @Failure 400,404,500 {object} ErrorResponse
-// @Router /sentinel/api/agents [post]
+// @Router /sentinel/agents [post]
+// @Security BearerAuth
 func (h *Handler) CreateAgent(ctx *gin.Context) {
 	var body models.CreateAgent
 
@@ -40,7 +42,22 @@ func (h *Handler) CreateAgent(ctx *gin.Context) {
 		return
 	}
 
-	id, apiKey, err := h.service.Agent.CreateAgent(body)
+	userIDRaw, exists := ctx.Get("account_id")
+	if !exists {
+		h.logger.Warn("unauthorized: account_id not found in context")
+		errorResponse(ctx, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
+	id, ok := userIDRaw.(string)
+	if !ok {
+		errorResponse(ctx, http.StatusBadRequest, errors.New("invalid account_id type"))
+		return
+	}
+
+	body.Id = id
+
+	resp, err := h.service.Agent.CreateAgent(body)
 	if err != nil {
 		h.logger.Error(err.Error())
 		errorResponse(ctx, http.StatusInternalServerError, err)
@@ -49,9 +66,10 @@ func (h *Handler) CreateAgent(ctx *gin.Context) {
 
 	h.logger.Info("Agent created successfully (create agent)")
 	ctx.JSON(http.StatusCreated, createAgentResponse{
-		Id:     id,
-		APIKey: apiKey,
-		Messge: "agent created successfully",
+		Id:           resp.ID,
+		KafkaBrokers: resp.KafkaBrokers,
+		KafkaTopic:   resp.KafkaTopic,
+		Message:      "agent created successfully",
 	})
 }
 
@@ -63,19 +81,13 @@ func (h *Handler) CreateAgent(ctx *gin.Context) {
 // @Param id path string true "agent id"
 // @Success 200 {object} models.Agent
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinel/api/agents/{id} [get]
+// @Router /sentinel/agents/{id} [get]
+// @Security BearerAuth
 func (h *Handler) GetAgentByID(ctx *gin.Context) {
-	paramValue := ctx.Param("id")
-	if paramValue == "" {
+	id := ctx.Param("id")
+	if id == "" {
 		h.logger.Warn("empty param value")
 		errorResponse(ctx, http.StatusBadRequest, errors.New("param value is emtpy"))
-		return
-	}
-
-	id, err := uuid.Parse(paramValue)
-	if err != nil {
-		h.logger.Error(err.Error())
-		errorResponse(ctx, http.StatusBadRequest, errors.New("agent id is wrong"))
 		return
 	}
 
@@ -94,6 +106,7 @@ func (h *Handler) GetAgentByID(ctx *gin.Context) {
 // @Tags agents
 // @Accept json
 // @Produce json
+// @Param account_id query string false "account id"
 // @Param name query string false "agent name"
 // @Param from query string false "Filter from last_seen (RFC3339 format)"
 // @Param to query string false "Filter to last_seen (RFC3339 format)"
@@ -101,7 +114,8 @@ func (h *Handler) GetAgentByID(ctx *gin.Context) {
 // @Param page query int false "Page" default(1)
 // @Success 200 {object} agentListResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinel/api/agents [get]
+// @Router /sentinel/agents [get]
+// @Security BearerAuth
 func (h *Handler) ListAgents(ctx *gin.Context) {
 	var filter models.FilterAgent
 
@@ -110,6 +124,21 @@ func (h *Handler) ListAgents(ctx *gin.Context) {
 		errorResponse(ctx, http.StatusBadRequest, err)
 		return
 	}
+
+	userIDRaw, exists := ctx.Get("account_id")
+	if !exists {
+		h.logger.Warn("unauthorized: account_id not found in context")
+		errorResponse(ctx, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
+	id, ok := userIDRaw.(string)
+	if !ok {
+		errorResponse(ctx, http.StatusBadRequest, errors.New("invalid account_id type"))
+		return
+	}
+
+	filter.AccountID = id
 
 	page, err := getPageQuery(ctx)
 	if err != nil {
@@ -141,34 +170,20 @@ func (h *Handler) ListAgents(ctx *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "agent id"
-// @Param update body models.UpdateLastSeen true "update last seen"
+// @Param update body models.HeartbeatRequest true "update last seen"
 // @Success 200 {object} SuccessResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinel/api/agents/{id}/lastseen [put]
-func (h *Handler) UpdateLastSeen(ctx *gin.Context) {
-	var paramValue = ctx.Param("id")
-	if paramValue == "" {
-		h.logger.Warn("empty param value")
-		errorResponse(ctx, http.StatusBadRequest, errors.New("param value is empty"))
-		return
-	}
-
-	id, err := uuid.Parse(paramValue)
-	if err != nil {
-		h.logger.Error(err.Error())
-		errorResponse(ctx, http.StatusBadRequest, errors.New("user id is wrong"))
-		return
-	}
-
-	var body models.UpdateLastSeen
+// @Router /sentinel/agents/heartbeat [put]
+// @Security BearerAuth
+func (h *Handler) Heartbeat(ctx *gin.Context) {
+	var body models.HeartbeatRequest
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		h.logger.Warn(err.Error())
 		errorResponse(ctx, http.StatusBadRequest, err)
 		return
 	}
 
-	body.Id = id
-	err = h.service.Agent.UpdateLastSeen(body)
+	err := h.service.Agent.UpdateLastSeen(body.AgentID)
 	if err != nil {
 		h.logger.Error(err.Error())
 		errorResponse(ctx, http.StatusInternalServerError, err)
@@ -188,23 +203,17 @@ func (h *Handler) UpdateLastSeen(ctx *gin.Context) {
 // @Param id path string true "agent id"
 // @Success 200 {object} SuccessResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /sentinel/api/agents/{id} [delete]
+// @Router /sentinel/agents/{id} [delete]
+// @Security BearerAuth
 func (h *Handler) DeleteAgent(ctx *gin.Context) {
-	var paramValue = ctx.Param("id")
-	if paramValue == "" {
+	var id = ctx.Param("id")
+	if id == "" {
 		h.logger.Warn("empty param value")
 		errorResponse(ctx, http.StatusBadRequest, errors.New("param value is empty"))
 		return
 	}
 
-	id, err := uuid.Parse(paramValue)
-	if err != nil {
-		h.logger.Error(err.Error())
-		errorResponse(ctx, http.StatusBadRequest, errors.New("user id is wrong"))
-		return
-	}
-
-	err = h.service.Agent.DeleteAgent(id)
+	err := h.service.Agent.DeleteAgent(id)
 	if err != nil {
 		h.logger.Error(err.Error())
 		errorResponse(ctx, http.StatusInsufficientStorage, err)

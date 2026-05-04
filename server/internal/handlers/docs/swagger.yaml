@@ -28,23 +28,43 @@ definitions:
       token:
         type: string
     type: object
+  handlers.createAccountResponse:
+    properties:
+      id:
+        type: string
+    type: object
   handlers.createAgentResponse:
     properties:
-      api_key:
-        type: string
       id:
+        type: string
+      kafka_brokers:
+        items:
+          type: string
+        type: array
+      kafka_topic:
         type: string
       message:
         type: string
     type: object
-  handlers.createUserResponse:
+  handlers.statsResponse:
     properties:
+      data:
+        $ref: '#/definitions/models.DashboardStats'
+    type: object
+  models.Account:
+    properties:
+      api_key:
+        type: string
+      email:
+        type: string
       id:
+        type: string
+      username:
         type: string
     type: object
   models.Agent:
     properties:
-      api_key:
+      account_id:
         type: string
       created_at:
         type: string
@@ -56,39 +76,68 @@ definitions:
         type: string
       name:
         type: string
+      status:
+        type: string
     type: object
-  models.CreateAgent:
+  models.AlertStats:
+    properties:
+      critical:
+        type: integer
+      total:
+        type: integer
+    type: object
+  models.CreateAccount:
     properties:
       api_key:
         type: string
-      ip_address:
+      email:
         type: string
-      last_seen:
+      id:
         type: string
-      name:
-        type: string
-    required:
-    - api_key
-    - ip_address
-    - last_seen
-    - name
-    type: object
-  models.CreateUser:
-    properties:
       password:
-        type: string
-      role:
         type: string
       username:
         type: string
+    type: object
+  models.CreateAgent:
+    properties:
+      accountID:
+        type: string
+      id:
+        type: string
+      ipaddress:
+        type: string
+      lastSeen:
+        type: string
+      name:
+        type: string
+    type: object
+  models.DashboardStats:
+    properties:
+      activeAlerts:
+        $ref: '#/definitions/models.AlertStats'
+      authFail:
+        $ref: '#/definitions/models.Trend'
+      errorRate:
+        $ref: '#/definitions/models.Trend'
+      requests:
+        $ref: '#/definitions/models.Trend'
+    type: object
+  models.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
     required:
-    - password
-    - role
-    - username
+    - email
+    type: object
+  models.HeartbeatRequest:
+    properties:
+      agent_id:
+        type: string
     type: object
   models.Log:
     properties:
-      agent_id:
+      agentId:
         type: string
       event:
         type: string
@@ -96,13 +145,26 @@ definitions:
         type: string
       level:
         type: string
-      log_time:
+      logTime:
         type: string
       message:
         type: string
-      recorded_at:
+      recordedAt:
         type: string
-      user_id:
+      userId:
+        type: string
+    type: object
+  models.LogVolumeStats:
+    properties:
+      app_logs:
+        type: integer
+      error_count:
+        type: integer
+      has_error:
+        type: boolean
+      nginx_logs:
+        type: integer
+      time:
         type: string
     type: object
   models.Login:
@@ -115,97 +177,83 @@ definitions:
     - password
     - username
     type: object
-  models.MarkAlertRead:
-    properties:
-      is_read:
-        type: boolean
-    required:
-    - is_read
-    type: object
   models.Metric:
     properties:
-      agent_id:
+      agentId:
         type: string
       cpu:
+        format: float64
         type: number
       disk:
+        format: float64
         type: number
       id:
         type: string
-      log_time:
+      logTime:
         type: string
       ram:
+        format: float64
         type: number
-      recorded_at:
+      recordedAt:
         type: string
     type: object
   models.NginxLog:
     properties:
-      agent_id:
+      agentId:
         type: string
       bytes:
         type: integer
       id:
         type: string
-      ip_address:
+      ipaddress:
         type: string
-      log_time:
+      logTime:
         type: string
       method:
         type: string
       path:
         type: string
-      recorded_at:
+      recordedAt:
         type: string
       status:
         type: integer
-      user_agent:
+      userAgent:
         type: string
     type: object
   models.Register:
     properties:
-      password:
+      email:
         type: string
-      role:
-        type: string
-      username:
-        type: string
-    required:
-    - password
-    - role
-    - username
-    type: object
-  models.UpdateLastSeen:
-    properties:
-      last_seen:
-        type: string
-    required:
-    - last_seen
-    type: object
-  models.UpdateRole:
-    properties:
-      role:
-        type: string
-    required:
-    - role
-    type: object
-  models.UpdateUser:
-    properties:
       password:
         type: string
       username:
         type: string
     required:
+    - email
     - password
     - username
     type: object
-  models.User:
+  models.ResetPasswordRequest:
     properties:
-      id:
-        type: string
       password:
+        minLength: 8
         type: string
-      role:
+      token:
+        type: string
+    required:
+    - password
+    - token
+    type: object
+  models.Trend:
+    properties:
+      percent:
+        type: number
+      value:
+        type: number
+    type: object
+  models.UpdateAccount:
+    properties:
+      password:
         type: string
       username:
         type: string
@@ -217,12 +265,149 @@ info:
   title: Sentinel API
   version: "1.0"
 paths:
-  /sentinel/api/agents:
+  /sentinel/accounts:
+    post:
+      consumes:
+      - application/json
+      description: Create Account
+      parameters:
+      - description: Create Account
+        in: body
+        name: create
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateAccount'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.createAccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Account
+      tags:
+      - account
+  /sentinel/accounts/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Account
+      parameters:
+      - description: account id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Account
+      tags:
+      - account
+    get:
+      consumes:
+      - application/json
+      description: Get Account by ID
+      parameters:
+      - description: account id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Account'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Account
+      tags:
+      - account
+    put:
+      consumes:
+      - application/json
+      description: Update Account
+      parameters:
+      - description: account id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: update account
+        in: body
+        name: update
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateAccount'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Account
+      tags:
+      - account
+  /sentinel/agents:
     get:
       consumes:
       - application/json
       description: Retrieve a paginated list of agents
       parameters:
+      - description: account id
+        in: query
+        name: account_id
+        type: string
       - description: agent name
         in: query
         name: name
@@ -268,6 +453,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get list of agents
       tags:
       - agents
@@ -301,10 +488,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Create Agent
       tags:
       - agents
-  /sentinel/api/agents/{id}:
+  /sentinel/agents/{id}:
     delete:
       consumes:
       - application/json
@@ -338,6 +527,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Delete Agent
       tags:
       - agents
@@ -374,10 +565,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get Agent by id
       tags:
       - agents
-  /sentinel/api/agents/{id}/lastseen:
+  /sentinel/agents/heartbeat:
     put:
       consumes:
       - application/json
@@ -393,7 +586,7 @@ paths:
         name: update
         required: true
         schema:
-          $ref: '#/definitions/models.UpdateLastSeen'
+          $ref: '#/definitions/models.HeartbeatRequest'
       produces:
       - application/json
       responses:
@@ -417,10 +610,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Update Last Seen
       tags:
       - agents
-  /sentinel/api/alerts:
+  /sentinel/alerts:
     get:
       consumes:
       - application/json
@@ -475,10 +670,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get alerts by filter
       tags:
       - alerts
-  /sentinel/api/alerts/{id}:
+  /sentinel/alerts/{id}:
     get:
       consumes:
       - application/json
@@ -508,10 +705,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get Alert by id
       tags:
       - alerts
-  /sentinel/api/alerts/{id}/markread:
+  /sentinel/alerts/{id}/markread:
     put:
       consumes:
       - application/json
@@ -522,12 +721,6 @@ paths:
         name: id
         required: true
         type: string
-      - description: mark alert reaad
-        in: body
-        name: mark_read
-        required: true
-        schema:
-          $ref: '#/definitions/models.MarkAlertRead'
       produces:
       - application/json
       responses:
@@ -551,10 +744,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Mark alert read
       tags:
       - alerts
-  /sentinel/api/applogs:
+  /sentinel/applogs:
     get:
       description: Get app logs by filter
       parameters:
@@ -611,10 +806,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get app logs by filter
       tags:
       - logs
-  /sentinel/api/applogs/{id}:
+  /sentinel/applogs/{id}:
     get:
       consumes:
       - application/json
@@ -648,10 +845,141 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get applog by id
       tags:
       - logs
-  /sentinel/api/metrics:
+  /sentinel/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Forgot Password
+      parameters:
+      - description: Email
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/models.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Forgot Password
+      tags:
+      - Auth
+  /sentinel/login:
+    post:
+      consumes:
+      - application/json
+      description: Login User
+      parameters:
+      - description: Login
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/models.Login'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.authResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Login User
+      tags:
+      - Auth
+  /sentinel/logvolume:
+    get:
+      consumes:
+      - application/json
+      description: Get log volume stats
+      parameters:
+      - description: agent id
+        in: query
+        name: agent_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.LogVolumeStats'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get log volume statistics for an agent
+      tags:
+      - dashboard
+  /sentinel/me:
+    get:
+      consumes:
+      - application/json
+      description: Get Me
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Account'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current account
+      tags:
+      - account
+  /sentinel/metrics:
     get:
       consumes:
       - application/json
@@ -698,10 +1026,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get metric by filter
       tags:
       - logs
-  /sentinel/api/metrics/{id}:
+  /sentinel/metrics/{id}:
     get:
       consumes:
       - application/json
@@ -735,10 +1065,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get metric by id
       tags:
       - logs
-  /sentinel/api/nginxlogs:
+  /sentinel/nginxlogs:
     get:
       consumes:
       - application/json
@@ -789,10 +1121,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: get nginxlogs by filter
       tags:
       - logs
-  /sentinel/api/nginxlogs/{id}:
+  /sentinel/nginxlogs/{id}:
     get:
       consumes:
       - application/json
@@ -825,233 +1159,11 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get nginx log by id
       tags:
       - logs
-  /sentinel/api/users:
-    post:
-      consumes:
-      - application/json
-      description: Create User
-      parameters:
-      - description: Create User
-        in: body
-        name: create
-        required: true
-        schema:
-          $ref: '#/definitions/models.CreateUser'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/handlers.createUserResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Create User
-      tags:
-      - user
-  /sentinel/api/users/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete User
-      parameters:
-      - description: user id
-        in: path
-        name: id
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.SuccessResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Delete User
-      tags:
-      - user
-    get:
-      consumes:
-      - application/json
-      description: Get User
-      parameters:
-      - description: user id
-        in: path
-        name: id
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.User'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Get User
-      tags:
-      - user
-    put:
-      consumes:
-      - application/json
-      description: Update User
-      parameters:
-      - description: user id
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: update user
-        in: body
-        name: update
-        required: true
-        schema:
-          $ref: '#/definitions/models.UpdateUser'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.SuccessResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Update User
-      tags:
-      - user
-  /sentinel/api/users/{id}/role:
-    put:
-      consumes:
-      - application/json
-      description: Update User Role
-      parameters:
-      - description: user id
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: update user role
-        in: body
-        name: update
-        required: true
-        schema:
-          $ref: '#/definitions/models.UpdateRole'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.SuccessResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Update User Role
-      tags:
-      - user
-  /sentinel/login:
-    post:
-      consumes:
-      - application/json
-      description: Login User
-      parameters:
-      - description: Login
-        in: body
-        name: login
-        required: true
-        schema:
-          $ref: '#/definitions/models.Login'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.authResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Login User
-      tags:
-      - Auth
   /sentinel/register:
     post:
       consumes:
@@ -1086,4 +1198,82 @@ paths:
       summary: Register User
       tags:
       - Auth
+  /sentinel/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset Password
+      parameters:
+      - description: Email
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/models.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Reset Password
+      tags:
+      - Auth
+  /sentinel/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get dashboard stats
+      parameters:
+      - description: agent id
+        in: query
+        name: agent_id
+        type: string
+      - default: 1h
+        description: 'time period: 1h, 24h, 7d'
+        in: query
+        name: period
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.statsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get dashboard statistics
+      tags:
+      - dashboard
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

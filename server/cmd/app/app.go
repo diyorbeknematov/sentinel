@@ -12,8 +12,10 @@ import (
 	"github.com/diyorbek/sentinel/internal/consumer"
 	"github.com/diyorbek/sentinel/internal/event"
 	"github.com/diyorbek/sentinel/internal/handlers"
+	"github.com/diyorbek/sentinel/internal/mailer"
 	"github.com/diyorbek/sentinel/internal/repository"
 	"github.com/diyorbek/sentinel/internal/repository/postgres"
+	"github.com/diyorbek/sentinel/internal/repository/redis"
 	"github.com/diyorbek/sentinel/internal/service"
 )
 
@@ -22,16 +24,28 @@ type App struct {
 	consumer *consumer.Consumer
 	logger   *slog.Logger
 	analyzer *analyzer.LogAnalyzer
+	mailer   *mailer.Mailer
 }
 
 func New(cfg *config.Config, log *slog.Logger) (*App, error) {
+	// Initialize mailer with environment variables
+	mail := mailer.New(
+		cfg.MailerHost,
+		cfg.MailerPort,
+		cfg.MailerUsername,
+		cfg.MailerPassword,
+		cfg.MailerFrom,
+	)
+
 	db, err := postgres.DBConnection()
 	if err != nil {
 		return nil, fmt.Errorf("db connection: %w", err)
 	}
 
-	repos := repository.NewRepository(db)
-	svc := service.NewService(repos, cfg, log)
+	rdb := redis.NewRedisClient(cfg)
+
+	repos := repository.NewRepository(db, rdb)
+	svc := service.NewService(repos, cfg, log, mail)
 
 	// HTTP
 	handler := handlers.NewHandler(svc, log)
@@ -52,6 +66,7 @@ func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 		consumer: c,
 		analyzer: anlzr,
 		logger:   log,
+		mailer:   mail,
 	}, nil
 }
 

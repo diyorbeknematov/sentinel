@@ -21,6 +21,9 @@ import (
 // @Description API server for application
 // @host localhost:8081
 // @BasePath /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
