@@ -7,14 +7,14 @@ import (
 )
 
 type Log struct {
-	Id         uuid.UUID
-	AgentId    uuid.UUID
-	UserId     string
-	Event      string
-	Level      string
-	Message    string
-	LogTime    time.Time
-	RecordedAt time.Time
+	Id         uuid.UUID `json:"ip"`
+	AgentId    uuid.UUID `json:"agent_id"`
+	UserId     string    `json:"user_id"`
+	Event      string    `json:"event"`
+	Level      string    `json:"level"`
+	Message    string    `json:"message"`
+	LogTime    time.Time `json:"log_time"`
+	RecordedAt time.Time `json:"recorded_at"`
 }
 
 type CreateAppLog struct {

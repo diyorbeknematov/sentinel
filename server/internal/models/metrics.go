@@ -7,13 +7,13 @@ import (
 )
 
 type Metric struct {
-	Id         uuid.UUID
-	AgentId    uuid.UUID
-	CPU        float64
-	RAM        float64
-	Disk       float64
-	LogTime    time.Time
-	RecordedAt time.Time
+	Id         uuid.UUID `json:"id"`
+	AgentId    uuid.UUID `json:"agent_id"`
+	CPU        float64   `json:"cpu"`
+	RAM        float64   `json:"ram"`
+	Disk       float64   `json:"disk"`
+	LogTime    time.Time `json:"log_time"`
+	RecordedAt time.Time `json:"recorded_at"`
 }
 
 type CreateMetric struct {

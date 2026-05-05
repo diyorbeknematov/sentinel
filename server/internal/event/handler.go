@@ -65,7 +65,7 @@ func (h *EventHandler) HandleNginxLog(ctx context.Context, event models.Event) e
 	}
 
 	nginxLog.AgentId = event.AgentID
-
+	fmt.Println(nginxLog)
 	if _, err := h.service.NginxLog.CreateNginxLog(models.CreateNginxLog{
 		AgentId:   nginxLog.AgentId,
 		IPAddress: nginxLog.IPAddress,

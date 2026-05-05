@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/diyorbek/sentinel/internal/service"
@@ -64,12 +63,12 @@ func AuthMiddleware(service *service.Service) gin.HandlerFunc {
 func APIKeyMiddleware(service *service.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		apiKey := ctx.GetHeader("X-API-Key")
-		fmt.Println("api-key middileware: ", apiKey)
 		if apiKey == "" {
 			ctx.JSON(401, gin.H{"error": "missing api key"})
 			ctx.Abort()
 			return
 		}
+		
 		id, err := service.Account.GetAccountByAPIKey(apiKey)
 		if err != nil {
 			ctx.JSON(401, gin.H{"error": "invalid api key"})

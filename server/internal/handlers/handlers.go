@@ -48,7 +48,7 @@ func (h *Handler) SetupPublicRoutes(router *gin.Engine) {
 
 func (h *Handler) SetupRoutes(router *gin.Engine) {
 	router.POST("/sentinel/agents", middleware.APIKeyMiddleware(h.service), h.CreateAgent)
-	router.POST("/sentinel/heartbeat", middleware.APIKeyMiddleware(h.service), h.Heartbeat)
+	router.POST("/sentinel/agents/heartbeat", middleware.APIKeyMiddleware(h.service), h.Heartbeat)
 
 	router.Use(middleware.AuthMiddleware(h.service))
 	router.GET("sentinel/me", h.GetMe)

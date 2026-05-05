@@ -30,7 +30,7 @@ func (r *nginxLogRepo) CreateNginxLog(log models.CreateNginxLog) (uuid.UUID, err
 		bytes,
 		user_agent,
 		log_time
-	) VALUES ($1, $2, $3, $4, $5, $6, $7)
+	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 
 	if _, err := r.db.Exec(query,

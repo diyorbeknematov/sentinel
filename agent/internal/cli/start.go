@@ -49,7 +49,8 @@ var startCmd = &cobra.Command{
 		// 3. RUN SENDER
 		a.RunSender(ctx)
 
-		a.Heartbeat()
+		// 4. SENT HEARTBEAT
+		a.Heartbeat(ctx)
 
 		slog.Info("agent started successfully")
 
@@ -63,8 +64,8 @@ func init() {
 	startCmd.Flags().StringVar(&server, "server", "", "Server URL")
 	startCmd.Flags().StringVar(&agentName, "name", "", "Agent Server Name")
 
-	startCmd.MarkFlagRequired("api-key")
-	startCmd.MarkFlagRequired("server")
+	// startCmd.MarkFlagRequired("api-key")
+	// startCmd.MarkFlagRequired("server")
 
 	rootCmd.AddCommand(startCmd)
 }

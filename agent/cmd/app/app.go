@@ -97,19 +97,21 @@ func (a *App) Close() {
 	}
 }
 
-func (a *App) Heartbeat() {
-	ticker := time.NewTicker(30 * time.Second) // har 30s
-	defer ticker.Stop()
+func (a *App) Heartbeat(ctx context.Context) {
 	go func() {
-		for {
-			err := clients.SendHeartbeat(a.cfg)
-			if err != nil {
-				log.Println("heartbeat error:", err)
-			} else {
-				log.Println("heartbeat sent")
-			}
+		ticker := time.NewTicker(30 * time.Second) // har 30s
+		defer ticker.Stop()
 
-			<-ticker.C
+		for {
+			select {
+			case <-ticker.C:
+				if err := clients.SendHeartbeat(a.cfg); err != nil {
+					log.Println("heartbeat error:", err)
+				}
+			case <-ctx.Done(): // Dastur to'xtatilsa, goroutina ham to'xtaydi
+				log.Println("Heartbeat stopped")
+				return
+			}
 		}
 	}()
 }

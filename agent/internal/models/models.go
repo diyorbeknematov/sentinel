@@ -32,7 +32,6 @@ type AppLogPayload struct {
 }
 
 type NginxLogPayload struct {
-	IP        string    `json:"ip"`
 	IPAddress string    `json:"ip_address"`
 	Method    string    `json:"method"`
 	Path      string    `json:"path"`

@@ -173,7 +173,7 @@ func (r *accountRepo) UpdateAccount(req models.UpdateAccountDB) error {
 	UPDATE accounts 
 	SET
 		username = $2,
-		password = $3,
+		password = $3
 	WHERE id = $1;
 	`
 

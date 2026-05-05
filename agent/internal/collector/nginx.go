@@ -16,7 +16,7 @@ import (
 )
 
 var nginxRegex = regexp.MustCompile(
-	`(?P<ip>\S+) - - \[(?P<time>.*?)\] "(?P<method>\S+) (?P<path>\S+) \S+" (?P<status>\d+) (?P<bytes>\d+) "[^"]*" "(?P<ua>.*?)"`,
+	`(?P<ip>\S+) - - \[(?P<time>[^\]]+)\] "(?P<method>\S+) (?P<path>\S+) (?P<protocol>\S+)" (?P<status>\d{3}) (?P<bytes>\d+|-) "(?P<referrer>[^"]*)" "(?P<ua>[^"]*)"`,
 )
 
 func StartNginxLogCollector(ctx context.Context, cfg *config.Config, eventCh chan<- models.Event) {
@@ -102,7 +102,7 @@ func parseNginxLog(line string) (*models.NginxLogPayload, error) {
 	}
 
 	return &models.NginxLogPayload{
-		IP:        groups["ip"],
+		IPAddress: groups["ip"],
 		Method:    groups["method"],
 		Path:      groups["path"],
 		Status:    status,

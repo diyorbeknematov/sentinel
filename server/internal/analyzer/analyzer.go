@@ -19,19 +19,21 @@ type LogAnalyzer struct {
 
 	// AppLog uchun
 	eventCounts map[string][]time.Time
-	errorCounts  map[uuid.UUID][]time.Time
+	errorCounts map[uuid.UUID][]time.Time
 
 	// NginxLog uchun
 	requestCounts  map[string][]time.Time
 	notFoundCounts map[string][]time.Time
+	alertedIPs     map[string]time.Time
 }
 
 func NewLogAnalyzer() *LogAnalyzer {
 	return &LogAnalyzer{
-		eventCounts:   make(map[string][]time.Time),
+		eventCounts:    make(map[string][]time.Time),
 		errorCounts:    make(map[uuid.UUID][]time.Time),
 		requestCounts:  make(map[string][]time.Time),
 		notFoundCounts: make(map[string][]time.Time),
+		alertedIPs:     make(map[string]time.Time),
 	}
 }
 

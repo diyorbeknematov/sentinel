@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/diyorbek/sentinel/internal/models"
@@ -79,7 +78,7 @@ func (h *Handler) login(c *gin.Context) {
 		errorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
-	fmt.Println("accessToken:", accessToken.Token, body)
+
 	c.JSON(http.StatusOK, authResponse{
 		Token: accessToken.Token,
 	})

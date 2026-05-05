@@ -27,16 +27,28 @@ func (la *LogAnalyzer) checkDDoS(log *models.NginxLog) *AnalyzeRes {
 	defer la.mu.Unlock()
 
 	now := time.Now()
+
+	// request qo‘shamiz
 	la.requestCounts[log.IPAddress] = append(la.requestCounts[log.IPAddress], now)
 	la.requestCounts[log.IPAddress] = filterRecent(la.requestCounts[log.IPAddress], time.Minute)
 
 	if len(la.requestCounts[log.IPAddress]) >= 100 {
-		return &AnalyzeRes{
-			ThreatType: "DDOS",
-			Severity:   "CRITICAL",
-			Message:    "IP: " + log.IPAddress + " 1 daqiqada 100+ request",
+
+		lastAlert, exists := la.alertedIPs[log.IPAddress]
+
+		// agar oldin alert bo‘lmagan yoki 1 minut o‘tgan bo‘lsa
+		if !exists || time.Since(lastAlert) > time.Minute {
+
+			la.alertedIPs[log.IPAddress] = now
+
+			return &AnalyzeRes{
+				ThreatType: "DDOS",
+				Severity:   "CRITICAL",
+				Message:    "IP: " + log.IPAddress + " 1 daqiqada 100+ request",
+			}
 		}
 	}
+
 	return nil
 }
 

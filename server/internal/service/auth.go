@@ -50,7 +50,6 @@ func (s *authService) CreateToken(account models.Account, tokenType string, expi
 
 	token, err := jwtToken.SignedString([]byte(s.cfg.AccessToken))
 	if err != nil {
-		fmt.Println("Xatolik shu yerda")
 		return nil, apperrors.Internal(err)
 	}
 
@@ -128,7 +127,7 @@ func (s *authService) Register(req models.Register) (*models.Token, *models.Toke
 		}
 		return nil, nil, apperrors.Internal(err)
 	}
-	fmt.Println(userId)
+
 	return s.GenerateTokens(models.Account{
 		Id:       userId,
 		Email:    req.Email,
