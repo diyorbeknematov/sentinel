@@ -51,7 +51,7 @@ export default function Layout() {
     const fetchUnread = async () => {
       try {
         const res = await api.get('/alerts?is_read=false')
-        setUnreadCount(Number(res.data.total) || 0) // unread alertlar sonini total dan olamiz
+        setUnreadCount(Number(res.data.total) || 0)
       } catch {
         setUnreadCount(0)
       }
@@ -62,7 +62,9 @@ export default function Layout() {
   }, [])
 
   useEffect(() => {
-    const h = (e) => { if (userRef.current && !userRef.current.contains(e.target)) setOpenUser(false) }
+    const h = (e) => {
+      if (userRef.current && !userRef.current.contains(e.target)) setOpenUser(false)
+    }
     document.addEventListener('mousedown', h)
     return () => document.removeEventListener('mousedown', h)
   }, [])
@@ -76,7 +78,6 @@ export default function Layout() {
         setUser(null)
       }
     }
-
     fetchUser()
   }, [])
 
@@ -90,10 +91,10 @@ export default function Layout() {
       minHeight: '100vh',
       display: 'flex',
       fontFamily: 'Inter, system-ui, sans-serif',
-      background: '#080b14',
+      background: '#F0F4F8',
       backgroundImage: `
-        linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px)
+        linear-gradient(rgba(148,163,184,0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148,163,184,0.12) 1px, transparent 1px)
       `,
       backgroundSize: '40px 40px',
     }}>
@@ -102,29 +103,38 @@ export default function Layout() {
       <aside style={{
         position: 'fixed', top: 0, left: 0,
         width: `${SIDEBAR_WIDTH}px`, height: '100vh',
-        background: '#0d1120',
-        borderRight: '1px solid #1e293b',
+        background: '#FFFFFF',
+        borderRight: '1px solid #E2E8F0',
         display: 'flex', flexDirection: 'column',
         padding: '20px 12px',
         zIndex: 50,
+        boxShadow: '2px 0 8px rgba(0,0,0,0.04)',
       }}>
 
         {/* Logo */}
-        <div style={{ display:'flex', alignItems:'center', gap:'10px', padding:'4px 8px', marginBottom:'28px' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '10px',
+          padding: '4px 8px', marginBottom: '28px',
+        }}>
           <div style={{
-            width:'32px', height:'32px', borderRadius:'8px',
-            background:'rgba(99,102,241,0.15)',
-            display:'flex', alignItems:'center', justifyContent:'center',
-            fontSize:'12px', fontWeight:'700', color:'#a5b4fc',
+            width: '32px', height: '32px', borderRadius: '8px',
+            background: '#2563EB',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '12px', fontWeight: '700', color: '#FFFFFF',
+            boxShadow: '0 2px 8px rgba(37,99,235,0.35)',
           }}>LM</div>
           <div>
-            <div style={{ fontSize:'14px', fontWeight:'600', color:'#e2e8f0' }}>LogMonitor</div>
-            <div style={{ fontSize:'11px', color:'#475569' }}>Security Dashboard</div>
+            <div style={{ fontSize: '14px', fontWeight: '600', color: '#1E293B' }}>
+              LogMonitor
+            </div>
+            <div style={{ fontSize: '11px', color: '#94A3B8' }}>
+              Security Dashboard
+            </div>
           </div>
         </div>
 
         {/* Nav */}
-        <nav style={{ display:'flex', flexDirection:'column', gap:'2px', flex:1 }}>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
           {navItems.map(item => (
             <NavLink
               key={item.to}
@@ -135,18 +145,19 @@ export default function Layout() {
                 padding: '9px 10px', borderRadius: '8px',
                 fontSize: '13px', textDecoration: 'none',
                 transition: 'all 0.15s',
-                background: isActive ? 'rgba(99,102,241,0.12)' : 'transparent',
-                color: isActive ? '#a5b4fc' : '#64748b',
-                border: isActive ? '1px solid rgba(99,102,241,0.2)' : '1px solid transparent',
+                background: isActive ? '#EEF2FF' : 'transparent',
+                color: isActive ? '#4F46E5' : '#64748B',
+                border: isActive ? '1px solid #C7D2FE' : '1px solid transparent',
+                fontWeight: isActive ? '500' : '400',
               })}
             >
               {item.icon}
-              <span style={{ flex:1 }}>{item.label}</span>
+              <span style={{ flex: 1 }}>{item.label}</span>
               {item.badge && unreadCount > 0 && (
                 <span style={{
-                  fontSize:'10px', padding:'1px 6px', borderRadius:'10px',
-                  background:'rgba(239,68,68,0.15)', color:'#fca5a5',
-                  fontFamily:'monospace',
+                  fontSize: '10px', padding: '1px 6px', borderRadius: '10px',
+                  background: '#FEE2E2', color: '#DC2626',
+                  fontFamily: 'monospace', fontWeight: '600',
                 }}>{unreadCount}</span>
               )}
             </NavLink>
@@ -154,57 +165,69 @@ export default function Layout() {
         </nav>
 
         {/* User */}
-        <div ref={userRef} style={{ position:'relative', borderTop:'1px solid #1e293b', paddingTop:'12px' }}>
+        <div ref={userRef} style={{
+          position: 'relative',
+          borderTop: '1px solid #E2E8F0',
+          paddingTop: '12px',
+        }}>
           <div
             onClick={() => setOpenUser(!openUser)}
             style={{
-              display:'flex', alignItems:'center', gap:'10px',
-              padding:'8px 10px', borderRadius:'8px', cursor:'pointer',
-              transition:'background 0.15s',
+              display: 'flex', alignItems: 'center', gap: '10px',
+              padding: '8px 10px', borderRadius: '8px', cursor: 'pointer',
+              transition: 'background 0.15s',
             }}
-            onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.04)'}
-            onMouseLeave={e => e.currentTarget.style.background='transparent'}
+            onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
             <div style={{
-              width:'30px', height:'30px', borderRadius:'50%', flexShrink:0,
-              background:'rgba(168,85,247,0.15)',
-              display:'flex', alignItems:'center', justifyContent:'center',
-              fontSize:'11px', fontWeight:'600', color:'#c4b5fd',
-            }}>A</div>
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:'13px', fontWeight:'500', color:'#e2e8f0' }}>
-                <div>{user?.username || 'Loading...' }</div>
+              width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
+              background: '#EEF2FF',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '11px', fontWeight: '600', color: '#4F46E5',
+              border: '1px solid #C7D2FE',
+            }}>
+              {user?.username?.[0]?.toUpperCase() || 'A'}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '13px', fontWeight: '500', color: '#1E293B' }}>
+                {user?.username || 'Loading...'}
               </div>
-              <div style={{ fontSize:'11px', color:'#475569', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                <div>{user?.role || 'Admin'}</div>
+              <div style={{
+                fontSize: '11px', color: '#94A3B8',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {user?.role || 'Admin'}
               </div>
             </div>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+              stroke="#94A3B8" strokeWidth="2"
+              style={{ transform: openUser ? 'rotate(180deg)' : 'none', transition: '0.2s' }}>
               <polyline points="6 9 12 15 18 9"/>
             </svg>
           </div>
 
           {openUser && (
             <div style={{
-              position:'absolute', bottom:'calc(100% + 6px)', left:0, right:0,
-              background:'#0d1120', border:'1px solid #1e293b',
-              borderRadius:'10px', padding:'6px', overflow:'hidden',
-              boxShadow:'0 -8px 24px rgba(0,0,0,0.4)',
+              position: 'absolute', bottom: 'calc(100% + 6px)', left: 0, right: 0,
+              background: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: '10px', padding: '6px', overflow: 'hidden',
+              boxShadow: '0 -8px 24px rgba(0,0,0,0.08)',
             }}>
               <div
-                onClick={() => {
-                  navigate('/profile')
-                  setOpenUser(false)
-                }}
+                onClick={() => { navigate('/profile'); setOpenUser(false) }}
                 style={{
-                  display:'flex', alignItems:'center', gap:'8px',
-                  padding:'8px 12px', borderRadius:'6px',
-                  fontSize:'13px', color:'#cbd5f5', cursor:'pointer',
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '8px 12px', borderRadius: '6px',
+                  fontSize: '13px', color: '#374151', cursor: 'pointer',
+                  transition: 'background 0.15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background='rgba(99,102,241,0.1)'}
-                onMouseLeave={e => e.currentTarget.style.background='transparent'}
+                onMouseEnter={e => e.currentTarget.style.background = '#F1F5F9'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                  stroke="#64748B" strokeWidth="2">
                   <circle cx="12" cy="7" r="4"/>
                   <path d="M5.5 21a6.5 6.5 0 0 1 13 0"/>
                 </svg>
@@ -214,14 +237,16 @@ export default function Layout() {
               <div
                 onClick={logout}
                 style={{
-                  display:'flex', alignItems:'center', gap:'8px',
-                  padding:'8px 12px', borderRadius:'6px',
-                  fontSize:'13px', color:'#f87171', cursor:'pointer',
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '8px 12px', borderRadius: '6px',
+                  fontSize: '13px', color: '#EF4444', cursor: 'pointer',
+                  transition: 'background 0.15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background='rgba(239,68,68,0.1)'}
-                onMouseLeave={e => e.currentTarget.style.background='transparent'}
+                onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                  stroke="#EF4444" strokeWidth="2">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
                   <polyline points="16 17 21 12 16 7"/>
                   <line x1="21" y1="12" x2="9" y2="12"/>
@@ -239,7 +264,7 @@ export default function Layout() {
         flex: 1, minHeight: '100vh',
         display: 'flex', justifyContent: 'center',
       }}>
-        <div style={{ width:'100%', maxWidth:'1200px', padding:'24px' }}>
+        <div style={{ width: '100%', maxWidth: '1400px', padding: '24px' }}>
           <Outlet />
         </div>
       </main>

@@ -4,17 +4,17 @@ import api from '../api/axios'
 
 const S = {
   page: { 
-    minHeight: '100vh', 
+    minHeight: '100vh',
     padding: '0' 
   },
   navbar: {
     position: 'sticky', 
     top: 0, 
     zIndex: 30,
-    background: 'rgba(8,11,20,0.85)', 
+    background: 'linear-gradient(90deg, rgba(79,70,229,0.08), rgba(16,185,129,0.05))',
     backdropFilter: 'blur(12px)',
-    borderBottom: '1px solid #1e293b',
-    height: '52px', 
+    borderBottom: '1px solid rgba(148,163,184,0.2)',
+    height: '56px', 
     display: 'flex', 
     alignItems: 'center', 
     justifyContent: 'space-between',
@@ -25,38 +25,39 @@ const S = {
     marginBottom: '32px',
   },
   card: {
-    background: '#0d1120', 
-    border: '1px solid #1e293b',
+    background: '#FFFFFF', 
+    border: '1px solid #E2E8F0',
     borderRadius: '12px', 
     padding: '20px 24px',
     display: 'flex', 
     gap: '18px', 
     alignItems: 'flex-start',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.04)',
   },
   stepNum: {
     width: '28px', 
     height: '28px', 
     borderRadius: '50%',
-    background: 'rgba(99,102,241,0.1)', 
-    border: '1px solid rgba(99,102,241,0.25)',
+    background: '#EEF2FF', 
+    border: '1px solid #C7D2FE',
     display: 'flex', 
     alignItems: 'center', 
     justifyContent: 'center',
-    fontSize: '12px', 
-    fontWeight: '600', 
-    color: '#818cf8',
+    fontSize: '13px', 
+    fontWeight: '700', 
+    color: '#4F46E5',
     flexShrink: 0, 
     marginTop: '2px', 
     fontFamily: 'monospace',
   },
   codeBlock: {
-    background: '#080b14',
-    border: '1px solid #1e293b',
+    background: '#F1F5F9', // Kod bloki uchun och terminal foni
+    border: '1px solid #E2E8F0',
     borderRadius: '8px',
-    padding: '12px 16px',
+    padding: '14px 16px',
     fontFamily: 'monospace',
-    fontSize: '12px',
-    color: '#94a3b8',
+    fontSize: '13px',
+    color: '#334155',
     marginTop: '12px',
     position: 'relative',
     lineHeight: '1.8',
@@ -65,8 +66,8 @@ const S = {
     display: 'flex', 
     alignItems: 'center', 
     gap: '8px',
-    background: '#080b14', 
-    border: '1px solid #1e293b',
+    background: '#F1F5F9', 
+    border: '1px solid #E2E8F0',
     borderRadius: '8px', 
     padding: '10px 14px', 
     marginTop: '12px',
@@ -79,7 +80,7 @@ const S = {
     display: 'flex', 
     alignItems: 'center', 
     justifyContent: 'center',
-    color: '#475569', 
+    color: '#94A3B8', 
     flexShrink: 0, 
     borderRadius: '4px',
     transition: 'color 0.15s',
@@ -87,7 +88,7 @@ const S = {
 }
 
 const CopyIcon = ({ done }) => done ? (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="20 6 9 17 4 12"/>
   </svg>
 ) : (
@@ -115,13 +116,14 @@ function CopyButton({ getText, style = {} }) {
         position: 'absolute', 
         right: '10px', 
         top: '10px',
-        background: done ? 'rgba(34,197,94,0.08)' : 'rgba(30,41,59,0.7)',
-        border: `1px solid ${done ? 'rgba(34,197,94,0.25)' : '#1e293b'}`,
+        background: done ? '#DCFCE7' : '#FFFFFF',
+        border: `1px solid ${done ? '#BBF7D0' : '#E2E8F0'}`,
         borderRadius: '5px', 
-        padding: '5px 7px',
+        padding: '5px 8px',
         cursor: 'pointer', 
         display: 'flex', 
         alignItems: 'center',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
         transition: 'all 0.2s', 
         ...style,
       }}
@@ -147,17 +149,16 @@ function InlineCopy({ getText }) {
       title={done ? 'Nusxalandi!' : 'Nusxalash'}
       style={{
         ...S.iconBtn,
-        color: done ? '#4ade80' : '#475569',
+        color: done ? '#16A34A' : '#94A3B8',
       }}
-      onMouseEnter={e => !done && (e.currentTarget.style.color = '#94a3b8')}
-      onMouseLeave={e => !done && (e.currentTarget.style.color = '#475569')}
+      onMouseEnter={e => !done && (e.currentTarget.style.color = '#475569')}
+      onMouseLeave={e => !done && (e.currentTarget.style.color = '#94A3B8')}
     >
       <CopyIcon done={done} />
     </button>
   )
 }
 
-// Main 
 export default function Home() {
   const navigate = useNavigate()
   const [user,       setUser]       = useState(null)
@@ -183,7 +184,6 @@ export default function Home() {
   const serverURL = window.location.origin
 
   const installCmd  = `curl -sSL ${serverURL}/install.sh | bash`
-  const connectCmd  = `sentinel start \\\n  --api-key ${apiKey} \\\n  --server  ${serverURL}`
 
   const steps = [
     {
@@ -194,31 +194,35 @@ export default function Home() {
           <span style={{
             fontFamily: 'monospace',
             fontSize: '13px',
-            color: '#e2e8f0',
+            color: '#1E293B',
             flex: 1,
             letterSpacing: '0.5px',
             wordBreak: 'break-all',
+            fontWeight: '500',
           }}>
             {keyVisible ? apiKey : maskedKey}
           </span>
           <button
             onClick={() => setKeyVisible(v => !v)}
             style={{
-              fontSize: '10px',
+              fontSize: '11px',
               color: '#475569',
-              background: 'rgba(30,41,59,0.6)',
-              border: '1px solid #1e293b',
-              padding: '3px 10px',
-              borderRadius: '4px',
+              background: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              padding: '4px 10px',
+              borderRadius: '5px',
               cursor: 'pointer',
               fontFamily: 'monospace',
+              fontWeight: '500',
               flexShrink: 0,
+              boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
             }}
+            onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
+            onMouseLeave={e => e.currentTarget.style.background = '#FFFFFF'}
           >
             {keyVisible ? 'Hide key' : 'Show key'}
           </button>
 
-          {/* Nusxalash */}
           <InlineCopy getText={() => apiKey} />
         </div>
       ),
@@ -229,10 +233,10 @@ export default function Home() {
       content: (
         <div style={S.codeBlock}>
           <CopyButton getText={() => installCmd} />
-          <span style={{ color: '#475569' }}>$ </span>
-          <span style={{ color: '#c4b5fd' }}>curl</span>
+          <span style={{ color: '#94A3B8', fontWeight: '600' }}>$ </span>
+          <span style={{ color: '#7C3AED', fontWeight: '600' }}>curl</span>
           <span> -sSL {serverURL}/install.sh | </span>
-          <span style={{ color: '#c4b5fd' }}>bash</span>
+          <span style={{ color: '#7C3AED', fontWeight: '600' }}>bash</span>
         </div>
       ),
     },
@@ -245,20 +249,20 @@ export default function Home() {
             `sentinel start --api-key ${apiKey} --server ${serverURL}`
           } />
           <div>
-            <span style={{ color: '#475569' }}>$ </span>
-            <span style={{ color: '#c4b5fd' }}>sentinel</span>
-            <span style={{ color: '#94a3b8' }}> start \</span>
+            <span style={{ color: '#94A3B8', fontWeight: '600' }}>$ </span>
+            <span style={{ color: '#7C3AED', fontWeight: '600' }}>sentinel</span>
+            <span style={{ color: '#475569' }}> start \</span>
           </div>
           <div style={{ paddingLeft: '16px' }}>
-            <span style={{ color: '#34d399' }}>--api-key </span>
-            <span style={{ color: '#fcd34d' }}>
+            <span style={{ color: '#059669', fontWeight: '600' }}>--api-key </span>
+            <span style={{ color: '#D97706', fontWeight: '500' }}>
               {keyVisible ? apiKey : maskedKey}
             </span>
-            <span style={{ color: '#94a3b8' }}> \</span>
+            <span style={{ color: '#475569' }}> \</span>
           </div>
           <div style={{ paddingLeft: '16px' }}>
-            <span style={{ color: '#34d399' }}>--server </span>
-            <span style={{ color: '#a5b4fc' }}>{serverURL}</span>
+            <span style={{ color: '#059669', fontWeight: '600' }}>--server </span>
+            <span style={{ color: '#2563EB' }}>{serverURL}</span>
           </div>
         </div>
       ),
@@ -267,18 +271,20 @@ export default function Home() {
       title: 'Dashboard da kuzating',
       desc:  "Agent ulangandan so'ng 1–2 daqiqa ichida ma'lumotlar chiqadi.",
       content: (
-        <div style={{ marginTop: '12px', display: 'flex', gap: '10px' }}>
+        <div style={{ marginTop: '14px', display: 'flex', gap: '10px' }}>
           <button
             onClick={() => navigate('/dashboard')}
             style={{
               fontSize: '12px', 
-              padding: '7px 16px', 
+              padding: '8px 18px', 
               borderRadius: '6px',
-              border: '1px solid rgba(99,102,241,0.35)',
-              background: 'rgba(99,102,241,0.1)', 
-              color: '#a5b4fc',
+              border: '1px solid #4F46E5',
+              background: '#EEF2FF', 
+              color: '#4F46E5',
               cursor: 'pointer', 
               fontFamily: 'monospace',
+              fontWeight: '600',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
             }}
           >
             Dashboard →
@@ -287,14 +293,18 @@ export default function Home() {
             onClick={() => navigate('/agents')}
             style={{
               fontSize: '12px', 
-              padding: '7px 16px', 
+              padding: '8px 18px', 
               borderRadius: '6px',
-              border: '1px solid #1e293b', 
-              background: 'transparent',
-              color: '#64748b', 
+              border: '1px solid #E2E8F0', 
+              background: '#FFFFFF',
+              color: '#475569', 
               cursor: 'pointer', 
               fontFamily: 'monospace',
+              fontWeight: '500',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
             }}
+            onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
+            onMouseLeave={e => e.currentTarget.style.background = '#FFFFFF'}
           >
             Agentlarni ko'rish
           </button>
@@ -309,25 +319,26 @@ export default function Home() {
       {/* Navbar */}
       <div style={S.navbar}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '600', color: '#e2e8f0' }}>Sentinel</span>
-          <span style={{ fontSize: '11px', color: '#475569', fontFamily: 'monospace' }}>· Boshlash</span>
+          <span style={{ fontSize: '16px', fontWeight: '600', color: '#1E293B' }}>Sentinel</span>
+          <span style={{ fontSize: '12px', color: '#64748B', fontFamily: 'monospace', fontWeight: '500' }}>· Boshlash</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {agentCount > 0 && (
             <span style={{
-              fontSize: '11px', 
-              padding: '3px 10px', 
+              fontSize: '12px', 
+              padding: '4px 12px', 
               borderRadius: '20px',
-              background: 'rgba(34,197,94,0.08)', 
-              border: '1px solid rgba(34,197,94,0.2)',
-              color: '#4ade80', 
+              background: '#DCFCE7', 
+              border: '1px solid #BBF7D0',
+              color: '#15803D', 
               fontFamily: 'monospace',
+              fontWeight: '600',
             }}>
               {agentCount} agent ulangan
             </span>
           )}
           {user?.username && (
-            <span style={{ fontSize: '12px', color: '#475569', fontFamily: 'monospace' }}>
+            <span style={{ fontSize: '13px', color: '#475569', fontFamily: 'monospace', fontWeight: '500' }}>
               {user.username}
             </span>
           )}
@@ -335,37 +346,37 @@ export default function Home() {
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: '640px', margin: '0 auto', padding: '0 24px 48px' }}>
+      <div style={{ maxWidth: '820px', margin: '0 auto', padding: '0 24px 48px' }}>
 
         <div style={{ marginBottom: '28px' }}>
           <h1 style={{ 
-            fontSize: '22px', 
-            fontWeight: '600', 
-            color: '#e2e8f0', 
+            fontSize: '24px', 
+            fontWeight: '700', 
+            color: '#1E293B', 
             margin: '0 0 6px' 
           }}>
             Xush kelibsiz{user?.username ? `, ${user.username}` : ''} 👋
           </h1>
-          <p style={{ fontSize: '13px', color: '#475569', margin: 0, fontFamily: 'monospace' }}>
+          <p style={{ fontSize: '13px', color: '#64748B', margin: 0, fontFamily: 'monospace', fontWeight: '500' }}>
             Monitoring boshlash uchun serveringizga agent o'rnating
           </p>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {steps.map((step, i) => (
             <div key={i} style={S.card}>
               <div style={S.stepNum}>{i + 1}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ 
-                  fontSize: '14px', 
+                  fontSize: '15px', 
                   fontWeight: '600', 
-                  color: '#e2e8f0', 
+                  color: '#1E293B', 
                   margin: '0 0 4px' }}>
                   {step.title}
                 </p>
                 <p style={{ 
-                  fontSize: '12px', 
-                  color: '#475569', 
+                  fontSize: '13px', 
+                  color: '#64748B', 
                   margin: 0, 
                   fontFamily: 'monospace' }}>
                   {step.desc}
@@ -380,25 +391,27 @@ export default function Home() {
         <div style={{
           marginTop: '24px', 
           padding: '16px 20px',
-          background: 'rgba(99,102,241,0.04)', 
-          border: '1px solid rgba(99,102,241,0.12)',
-          borderRadius: '10px', 
+          background: '#FFFFFF', 
+          border: '1px solid #E2E8F0',
+          borderRadius: '12px', 
           display: 'flex', gap: '24px', 
           flexWrap: 'wrap',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
         }}>
           <div>
-            <p style={{ fontSize: '10px', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 6px' }}>
+            <p style={{ fontSize: '10px', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 6px', fontWeight: '700' }}>
               Qo'llab-quvvatlanadigan OS
             </p>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {['Ubuntu 20+', 'Debian 11+', 'CentOS 8+'].map(os => (
                 <span key={os} style={{
-                  fontSize: '10px', 
-                  padding: '2px 8px', 
+                  fontSize: '11px', 
+                  padding: '3px 8px', 
                   borderRadius: '4px',
-                  background: 'rgba(99,102,241,0.12)', 
-                  color: '#818cf8', 
+                  background: '#EEF2FF', 
+                  color: '#4F46E5', 
                   fontFamily: 'monospace',
+                  fontWeight: '600',
                 }}>
                   {os}
                 </span>
@@ -406,16 +419,18 @@ export default function Home() {
             </div>
           </div>
           <div>
-            <p style={{ fontSize: '10px', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 6px' }}>
+            <p style={{ fontSize: '10px', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 6px', fontWeight: '700' }}>
               Agent holati
             </p>
             <span style={{
-              fontSize: '10px', 
-              padding: '2px 10px', 
+              fontSize: '11px', 
+              padding: '3px 10px', 
               borderRadius: '4px',
-              background: agentCount > 0 ? 'rgba(34,197,94,0.1)' : 'rgba(30,41,59,0.5)',
-              color: agentCount > 0 ? '#4ade80' : '#475569', fontFamily: 'monospace',
-              border: `1px solid ${agentCount > 0 ? 'rgba(34,197,94,0.2)' : '#1e293b'}`,
+              background: agentCount > 0 ? '#DCFCE7' : '#F1F5F9',
+              color: agentCount > 0 ? '#15803D' : '#64748B', 
+              fontFamily: 'monospace',
+              fontWeight: '600',
+              border: `1px solid ${agentCount > 0 ? '#BBF7D0' : '#E2E8F0'}`,
             }}>
               {agentCount > 0 ? `${agentCount} ta ulangan` : "Hali agent yo'q"}
             </span>
