@@ -42,7 +42,7 @@ func (r *agentRepo) CreateAgent(agent models.CreateAgentDB) (uuid.UUID, error) {
 		agent.IPAddress,
 		agent.LastSeen,
 	); err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, errors.New("failed to create agent: " + err.Error())
 	}
 
 	return agent.Id, nil
@@ -71,8 +71,9 @@ func (r *agentRepo) GetAgentByID(id uuid.UUID) (models.Agent, error) {
 		&agent.CreatedAt,
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return models.Agent{}, err
+			return models.Agent{}, errNoRowsAffected
 		}
+		return models.Agent{}, errors.New("failed to get agent: " + err.Error())
 	}
 
 	return agent, nil
@@ -134,7 +135,7 @@ func (r *agentRepo) ListAgents(filter models.FilterAgentDB) ([]models.Agent, int
 
 	rows, err := r.db.NamedQuery(baseQuery, params)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New("failed to list agents: " + err.Error())
 	}
 	defer rows.Close()
 
@@ -150,7 +151,7 @@ func (r *agentRepo) ListAgents(filter models.FilterAgentDB) ([]models.Agent, int
 			&a.CreatedAt,
 		); err != nil {
 
-			return nil, 0, err
+			return nil, 0, errors.New("failed to scan agent: " + err.Error())
 		}
 		agents = append(agents, a)
 	}
@@ -159,12 +160,12 @@ func (r *agentRepo) ListAgents(filter models.FilterAgentDB) ([]models.Agent, int
 	var total int
 	countQuery, countArgs, err := sqlx.Named(countQuery, params)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New("failed to prepare count query: " + err.Error())
 	}
 	countQuery = r.db.Rebind(countQuery)
 
 	if err := r.db.Get(&total, countQuery, countArgs...); err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New("failed to execute count query: " + err.Error())
 	}
 
 	return agents, total, nil
@@ -184,12 +185,12 @@ func (r *agentRepo) UpdateLastSeen(lastSeen models.UpdateLastSeen) error {
 		lastSeen.LastSeen,
 	)
 	if err != nil {
-		return err
+		return errors.New("failed to update last seen: " + err.Error())
 	}
 
 	rowAffected, err := row.RowsAffected()
 	if err != nil {
-		return err
+		return errors.New("failed to get rows affected: " + err.Error())
 	}
 
 	if rowAffected == 0 {
@@ -205,12 +206,12 @@ func (r *agentRepo) DeleteAgent(id uuid.UUID) error {
 	// Execute the query
 	row, err := r.db.Exec(query, id)
 	if err != nil {
-		return err
+		return errors.New("failed to delete agent: " + err.Error())
 	}
 
 	rowAffected, err := row.RowsAffected()
 	if err != nil {
-		return err
+		return errors.New("failed to get rows affected: " + err.Error())
 	}
 
 	if rowAffected == 0 {

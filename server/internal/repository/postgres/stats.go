@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"errors"
 	"time"
 
 	"github.com/diyorbek/sentinel/internal/models"
@@ -53,7 +54,7 @@ func (r *StatsRepo) GetDashboardStats(filter models.StatsFilter, duration time.D
 		WHERE recorded_at >= $1`+currAgentCond,
 		currArgs...)
 	if err != nil {
-		return stats, err
+		return stats, errors.New("failed to get stats: " + err.Error())
 	}
 
 	err = r.db.Get(&prevReq, `
@@ -61,7 +62,7 @@ func (r *StatsRepo) GetDashboardStats(filter models.StatsFilter, duration time.D
 		WHERE recorded_at BETWEEN $1 AND $2`+prevAgentCond,
 		prevArgs...)
 	if err != nil {
-		return stats, err
+		return stats, errors.New("failed to get stats: " + err.Error())
 	}
 
 	stats.Requests = models.Trend{
@@ -81,7 +82,7 @@ func (r *StatsRepo) GetDashboardStats(filter models.StatsFilter, duration time.D
 		WHERE recorded_at >= $1`+currAgentCond,
 		currArgs...)
 	if err != nil {
-		return stats, err
+		return stats, errors.New("failed to get stats: " + err.Error())
 	}
 
 	err = r.db.Get(&prevErr, `
@@ -93,7 +94,7 @@ func (r *StatsRepo) GetDashboardStats(filter models.StatsFilter, duration time.D
 		WHERE recorded_at BETWEEN $1 AND $2`+prevAgentCond,
 		prevArgs...)
 	if err != nil {
-		return stats, err
+		return stats, errors.New("failed to get stats: " + err.Error())
 	}
 
 	stats.ErrorRate = models.Trend{
@@ -111,7 +112,7 @@ func (r *StatsRepo) GetDashboardStats(filter models.StatsFilter, duration time.D
 		  AND recorded_at >= $1`+currAgentCond,
 		currArgs...)
 	if err != nil {
-		return stats, err
+		return stats, errors.New("failed to get stats: " + err.Error())
 	}
 
 	err = r.db.Get(&prevAuth, `
@@ -121,7 +122,7 @@ func (r *StatsRepo) GetDashboardStats(filter models.StatsFilter, duration time.D
 		  AND recorded_at BETWEEN $1 AND $2`+prevAgentCond,
 		prevArgs...)
 	if err != nil {
-		return stats, err
+		return stats, errors.New("failed to get stats: " + err.Error())
 	}
 
 	stats.AuthFail = models.Trend{
@@ -146,7 +147,7 @@ func (r *StatsRepo) GetDashboardStats(filter models.StatsFilter, duration time.D
 		FROM alerts`+alertCond,
 		alertArgs...).Scan(&totalAlerts, &criticalAlerts)
 	if err != nil {
-		return stats, err
+		return stats, errors.New("failed to get stats: " + err.Error())
 	}
 
 	stats.ActiveAlerts = models.AlertStats{
@@ -197,7 +198,7 @@ func (r *StatsRepo) GetLogVolume(id uuid.UUID) ([]models.LogVolumeStats, error) 
 	`
 	rows, err := r.db.Query(query, id)
 	if err != nil {
-		return volumes, err
+		return volumes, errors.New("failed to get log volume: " + err.Error())
 	}
 	defer rows.Close()
 
@@ -210,7 +211,7 @@ func (r *StatsRepo) GetLogVolume(id uuid.UUID) ([]models.LogVolumeStats, error) 
 			&v.ErrorLogs,
 			&v.HasError,
 		); err != nil {
-			return volumes, err
+			return volumes, errors.New("failed to scan log volume: " + err.Error())
 		}
 		volumes = append(volumes, v)
 	}

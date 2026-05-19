@@ -4,15 +4,18 @@ import api from '../api/axios'
 
 export default function ForgotPassword() {
   const navigate = useNavigate()
-  const [email,   setEmail]   = useState('')
+  const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
-  const [sent,    setSent]    = useState(false)
-  const [error,   setError]   = useState('')
+  const [sent, setSent] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    if (!email) { setError('Email kiritish shart'); return }
+    if (!email) {
+      setError('Email kiritish shart')
+      return
+    }
 
     setLoading(true)
     try {
@@ -27,102 +30,79 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh', background: '#080b14',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      backgroundImage: `linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px)`,
-      backgroundSize: '40px 40px',
-    }}>
-      <div style={{
-        width: '100%', maxWidth: '380px', margin: '0 16px',
-        background: '#0d1120', border: '1px solid #1e293b',
-        borderRadius: '16px', padding: '32px',
-      }}>
-
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '28px' }}>
-          <div style={{
-            width: '32px', height: '32px', borderRadius: '8px',
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '12px', fontWeight: '700', color: '#fff',
-          }}>S</div>
-          <span style={{ fontSize: '14px', fontWeight: '600', color: '#e2e8f0' }}>Sentinel</span>
+    <div
+      className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-sans"
+      style={{
+        backgroundImage: `linear-gradient(rgba(79,70,229,0.03) 1px, transparent 1px),
+                          linear-gradient(90deg, rgba(79,70,229,0.03) 1px, transparent 1px)`,
+        backgroundSize: '40px 40px'
+      }}
+    >
+      <div className="w-full max-w-sm mx-6 bg-white border border-[#E2E8F0] rounded-2xl p-8 shadow-xl">
+        
+        {/* Logo / Brend qismi */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-indigo-500/20">
+            SM
+          </div>
+          <span className="text-[#1E293B] font-bold text-base tracking-wide">Sentinel</span>
         </div>
 
-        <h1 style={{ fontSize: '18px', fontWeight: '600', color: '#e2e8f0', margin: '0 0 6px' }}>
-          Parolni tiklash
-        </h1>
-        <p style={{ fontSize: '12px', color: '#475569', margin: '0 0 24px', fontFamily: 'monospace' }}>
-          Email manzilingizga reset link yuboramiz
-        </p>
+        <h1 className="text-xl font-bold text-[#1E293B] mb-1">Parolni tiklash</h1>
+        <p className="text-slate-500 text-xs font-mono mb-6">Email manzilingizga reset link yuboramiz</p>
 
-        {/* Sent state */}
+        {/* Muvaffaqiyatli yuborilgandagi holat */}
         {sent ? (
-          <div style={{
-            padding: '16px', borderRadius: '8px',
-            background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)',
-            color: '#4ade80', fontSize: '12px', fontFamily: 'monospace', lineHeight: '1.6',
-          }}>
-            ✓ Reset link yuborildi. Emailingizni tekshiring.
-            <br/>
-            <span style={{ color: '#334155' }}>Login sahifasiga yo'naltirilmoqdasiz...</span>
+          <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-mono mb-4 leading-relaxed shadow-sm">
+            <div className="font-bold flex items-center gap-1.5 mb-1">
+              <span>✓</span> Reset link yuborildi.
+            </div>
+            Emailingizni tekshiring.
+            <div className="text-slate-400 text-[11px] mt-3 pt-2 border-t border-dashed border-emerald-200/60">
+              Login sahifasiga yo'naltirilmoqdasiz...
+            </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit}>
-
-            {/* Error */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* Xatolik xabari */}
             {error && (
-              <div style={{
-                marginBottom: '16px', padding: '10px 14px', borderRadius: '7px',
-                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-                color: '#fca5a5', fontSize: '12px', fontFamily: 'monospace',
-              }}>
-                {error}
+              <div className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-mono flex items-center gap-2 shadow-sm">
+                ⚠ {error}
               </div>
             )}
 
-            {/* Email */}
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{
-                display: 'block', fontSize: '10px', color: '#475569',
-                textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px',
-              }}>
-                Email
+            {/* Email input maydoni */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                Email manzil
               </label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="user@example.com"
-                style={{
-                  width: '100%', fontSize: '12px', padding: '10px 14px',
-                  borderRadius: '8px', border: '1px solid #1e293b',
-                  background: '#080b14', color: '#e2e8f0',
-                  fontFamily: 'monospace', outline: 'none', boxSizing: 'border-box',
-                }}
-                onFocus={e => e.target.style.borderColor = '#6366f1'}
-                onBlur={e  => e.target.style.borderColor = '#1e293b'}
-              />
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-500" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M4 4h16v16H4z" />
+                  <path d="M22 6l-10 7L2 6" />
+                </svg>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="admin@sentinel.com"
+                  className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-lg pl-10 pr-4 py-2.5 text-sm text-[#1E293B] font-mono placeholder-slate-400 outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition"
+                  required
+                />
+              </div>
             </div>
 
-            {/* Submit */}
+            {/* Tasdiqlash tugmasi */}
             <button
               type="submit"
               disabled={loading}
-              style={{
-                width: '100%', padding: '10px', borderRadius: '8px', border: 'none',
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                color: '#fff', fontSize: '13px', fontWeight: '600',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1, fontFamily: 'monospace',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-              }}
+              className="w-full py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-sm hover:opacity-95 active:scale-[0.99] transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm font-mono"
             >
               {loading && (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
-                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                 </svg>
               )}
               {loading ? 'Yuborilmoqda...' : 'Link yuborish'}
@@ -131,19 +111,17 @@ export default function ForgotPassword() {
           </form>
         )}
 
-        {/* Back to login */}
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+        {/* Loginga qaytish havolasi */}
+        <div className="mt-6 text-center">
           <span
             onClick={() => navigate('/login')}
-            style={{ fontSize: '12px', color: '#475569', cursor: 'pointer', fontFamily: 'monospace' }}
+            className="text-xs text-slate-500 hover:text-indigo-600 font-semibold font-mono cursor-pointer transition flex items-center justify-center gap-1"
           >
             ← Loginga qaytish
           </span>
         </div>
 
       </div>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   )
 }

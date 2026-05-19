@@ -59,8 +59,6 @@ func (s *logService) ListLogs(filter models.FilterAppLog) ([]models.AppLogRespon
 
 	logs, total, err := s.repo.AppLog.ListLogs(models.FilterAppLogDB{
 		AgentId: agentUId,
-		UserId:  filter.UserId,
-		Event:   filter.Event,
 		Level:   filter.Level,
 		From:    filter.From,
 		To:      filter.To,

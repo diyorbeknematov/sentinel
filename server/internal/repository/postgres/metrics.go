@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/diyorbek/sentinel/internal/models"
@@ -37,7 +38,7 @@ func (r *metricRepo) CreateMetric(metric models.CreateMetric) (uuid.UUID, error)
 		metric.Disk,
 		metric.LogTime,
 	); err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, errors.New("failed to create metric: " + err.Error())
 	}
 
 	return metric.Id, nil
@@ -67,7 +68,7 @@ func (r *metricRepo) GetMetricsByID(id uuid.UUID) (models.Metric, error) {
 		&metric.LogTime,
 		&metric.RecordedAt,
 	); err != nil {
-		return models.Metric{}, err
+		return models.Metric{}, errors.New("failed to get metric: " + err.Error())
 	}
 
 	return metric, nil
@@ -128,7 +129,7 @@ func (r *metricRepo) ListMetrics(filter models.FilterMetricsDB) ([]models.Metric
 	// Execute the main query
 	rows, err := r.db.NamedQuery(baseQuery, params)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New("failed to list metrics: " + err.Error())
 	}
 	defer rows.Close()
 
@@ -145,7 +146,7 @@ func (r *metricRepo) ListMetrics(filter models.FilterMetricsDB) ([]models.Metric
 			&m.RecordedAt,
 		); err != nil {
 
-			return nil, 0, err
+			return nil, 0, errors.New("failed to scan metric: " + err.Error())
 		}
 
 		metrics = append(metrics, m)
@@ -154,12 +155,12 @@ func (r *metricRepo) ListMetrics(filter models.FilterMetricsDB) ([]models.Metric
 	var total int
 	countQuery, countArgs, err := sqlx.Named(countQuery, params)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New("failed to prepare count query: " + err.Error())
 	}
 	countQuery = r.db.Rebind(countQuery)
 
 	if err := r.db.Get(&total, countQuery, countArgs...); err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New("failed to execute count query: " + err.Error())
 	}
 
 	return metrics, total, nil

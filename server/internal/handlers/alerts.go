@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/diyorbek/sentinel/internal/models"
@@ -76,8 +75,8 @@ func (h *Handler) ListAlerts(ctx *gin.Context) {
 		errorResponse(ctx, http.StatusBadRequest, err)
 		return
 	}
+	
 	filter.Offset = (page - 1) * filter.Limit
-	fmt.Println(filter)
 	alerts, total, err := h.service.Alert.ListAlerts(filter)
 	if err != nil {
 		h.logger.Error(err.Error())

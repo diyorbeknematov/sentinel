@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import api from '../api/axios'
 
-// Och rangli dizayn uchun HTTP Metodlar stillari
 const METHOD_COLORS = {
   GET:    { bg: '#EEF2FF', text: '#4F46E5' }, // Ko'k/Binafsha tonlar
   POST:   { bg: '#FEF3C7', text: '#D97706' }, // Sariq/To'q sariq
@@ -319,112 +318,110 @@ export default function NginxLogs() {
 
       {/* Table */}
       <div style={S.card}>
-        <div style={{ overflowX: 'auto', width: '100%' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-            <colgroup>
-              <col style={{ width: '100px' }}/>
-              <col style={{ width: '120px' }}/>
-              <col style={{ width: '120px' }}/>
-              <col style={{ minWidth: '220px' }}/>
-              <col style={{ width: '140px' }}/>
-              <col style={{ width: '100px' }}/>
-              <col style={{ width: '120px' }}/>
-              <col style={{ width: '30px' }}/>
-            </colgroup>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #E2E8F0', background: '#F8FAFC' }}>
-                <th style={S.th}>Time</th>
-                <th style={{ ...S.th, padding: '6px 12px' }}>
-                  <DropdownFilter label="Method" options={methodOptions} value={method} onChange={setMethod}/>
-                </th>
-                <th style={{ ...S.th, padding: '6px 12px' }}>
-                  <DropdownFilter label="Status" options={statusOptions} value={status} onChange={setStatus}/>
-                </th>
-                <th style={S.th}>Path</th>
-                <th style={S.th}>IP Address</th>
-                <th style={S.th}>Bytes</th>
-                <th style={S.th}>Agent</th>
-                <th style={S.th}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map(log => {
-                const currentMethod = log.method?.toUpperCase()
-                const currentStatus = Number(log.status)
-                const mStyle = METHOD_COLORS[currentMethod] || { bg: '#F1F5F9', text: '#64748B' }
-                const sStyle = getStatusStyle(currentStatus)
-                const rowBg  = getRowBg(currentStatus)
-                const expanded = expandedId === log.id
+        <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '100px' }}/>
+            <col style={{ width: '120px' }}/>
+            <col style={{ width: '120px' }}/>
+            <col style={{ minWidth: '220px' }}/>
+            <col style={{ width: '140px' }}/>
+            <col style={{ width: '100px' }}/>
+            <col style={{ width: '120px' }}/>
+            <col style={{ width: '30px' }}/>
+          </colgroup>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #E2E8F0', background: '#F8FAFC' }}>
+              <th style={S.th}>Time</th>
+              <th style={{ ...S.th, padding: '6px 12px' }}>
+                <DropdownFilter label="Method" options={methodOptions} value={method} onChange={setMethod}/>
+              </th>
+              <th style={{ ...S.th, padding: '6px 12px' }}>
+                <DropdownFilter label="Status" options={statusOptions} value={status} onChange={setStatus}/>
+              </th>
+              <th style={S.th}>Path</th>
+              <th style={S.th}>IP Address</th>
+              <th style={S.th}>Bytes</th>
+              <th style={S.th}>Agent</th>
+              <th style={S.th}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs.map(log => {
+              const currentMethod = log.method?.toUpperCase()
+              const currentStatus = Number(log.status)
+              const mStyle = METHOD_COLORS[currentMethod] || { bg: '#F1F5F9', text: '#64748B' }
+              const sStyle = getStatusStyle(currentStatus)
+              const rowBg  = getRowBg(currentStatus)
+              const expanded = expandedId === log.id
 
-                return (
-                  <>
-                    <tr
-                      key={log.id}
-                      onClick={() => toggleExpand(log.id)}
-                      style={{
-                        borderBottom: expanded ? 'none' : '1px solid #E2E8F0',
-                        background: expanded ? '#F1F5F9' : rowBg,
-                        cursor: 'pointer',
-                      }}
-                      onMouseEnter={e => { if (!expanded) e.currentTarget.style.background = expanded ? '#F1F5F9' : (rowBg !== 'transparent' ? rowBg : '#F8FAFC') }}
-                      onMouseLeave={e => { if (!expanded) e.currentTarget.style.background = expanded ? '#F1F5F9' : rowBg }}
-                    >
-                      <td style={{ ...S.td, color: currentStatus >= 400 ? sStyle.text : '#64748B' }}>
-                        {formatTime(log.log_time)}
-                      </td>
-                      <td style={S.td}>
-                        <Badge label={currentMethod} bg={mStyle.bg} text={mStyle.text} />
-                      </td>
-                      <td style={S.td}>
-                        <Badge label={log.status} bg={sStyle.bg} text={sStyle.text} />
-                      </td>
-                      <td style={{ ...S.td, color: currentStatus >= 400 ? sStyle.text : '#1E293B', fontWeight: currentStatus >= 400 ? '600' : '400' }}>
-                        {log.path}
-                      </td>
-                      <td style={S.td}>{log.ip_address}</td>
-                      <td style={S.td}>{log.bytes.toLocaleString()}</td>
-                      <td style={S.td}>
-                        <Badge label={log.agent_name} bg='#F1F5F9' text='#475569' />
-                      </td>
-                      <td style={{ ...S.td, color: '#64748B', textAlign: 'center', fontSize: '14px' }}>
-                        <span style={{ transition: 'transform 0.2s', display: 'inline-block', transform: expanded ? 'rotate(90deg)' : 'none' }}>›</span>
+              return (
+                <>
+                  <tr
+                    key={log.id}
+                    onClick={() => toggleExpand(log.id)}
+                    style={{
+                      borderBottom: expanded ? 'none' : '1px solid #E2E8F0',
+                      background: expanded ? '#F1F5F9' : rowBg,
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={e => { if (!expanded) e.currentTarget.style.background = expanded ? '#F1F5F9' : (rowBg !== 'transparent' ? rowBg : '#F8FAFC') }}
+                    onMouseLeave={e => { if (!expanded) e.currentTarget.style.background = expanded ? '#F1F5F9' : rowBg }}
+                  >
+                    <td style={{ ...S.td, color: currentStatus >= 400 ? sStyle.text : '#64748B' }}>
+                      {formatTime(log.log_time)}
+                    </td>
+                    <td style={S.td}>
+                      <Badge label={currentMethod} bg={mStyle.bg} text={mStyle.text} />
+                    </td>
+                    <td style={S.td}>
+                      <Badge label={log.status} bg={sStyle.bg} text={sStyle.text} />
+                    </td>
+                    <td style={{ ...S.td, color: currentStatus >= 400 ? sStyle.text : '#1E293B', fontWeight: currentStatus >= 400 ? '600' : '400' }}>
+                      {log.path}
+                    </td>
+                    <td style={S.td}>{log.ip_address}</td>
+                    <td style={S.td}>{log.bytes.toLocaleString()}</td>
+                    <td style={S.td}>
+                      <Badge label={log.agent_name} bg='#F1F5F9' text='#475569' />
+                    </td>
+                    <td style={{ ...S.td, color: '#64748B', textAlign: 'center', fontSize: '14px' }}>
+                      <span style={{ transition: 'transform 0.2s', display: 'inline-block', transform: expanded ? 'rotate(90deg)' : 'none' }}>›</span>
+                    </td>
+                  </tr>
+
+                  {/* Expanded detail */}
+                  {expanded && (
+                    <tr key={`${log.id}-detail`} style={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <td colSpan={8} style={{ padding: '0 16px 14px', background: '#F1F5F9' }}>
+                        <div style={{
+                          background: '#FFFFFF',
+                          border: `1px solid ${currentStatus >= 500 ? '#EF4444' : currentStatus >= 400 ? '#F59E0B' : '#E2E8F0'}`,
+                          borderRadius: '8px', padding: '14px 18px',
+                          fontFamily: 'monospace', fontSize: '12px', lineHeight: 1.8,
+                          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)',
+                        }}>
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>ip_address: </span><span style={{ color: '#1E293B' }}>{log.ip_address}</span><br/>
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>method: </span>
+                          <span style={{ color: mStyle.text, fontWeight: '600' }}>{currentMethod}</span><br/>
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>path: </span>
+                          <span style={{ color: '#1E293B', wordBreak: 'break-all' }}>{log.path}</span><br/>
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>status: </span>
+                          <span style={{ color: sStyle.text, fontWeight: '700' }}>{log.status}</span><br/>
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>bytes: </span><span style={{ color: '#1E293B' }}>{log.bytes}</span><br/>
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>user_agent: </span>
+                          <span style={{ color: '#475569', wordBreak: 'break-all' }}>{log.user_agent}</span><br/>
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>log_time: </span><span style={{ color: '#1E293B' }}>{log.log_time}</span><br/>
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>agent_id: </span>
+                          <span style={{ color: '#4F46E5', fontWeight: '600' }}>{log.agent_name}</span>
+                        </div>
                       </td>
                     </tr>
-
-                    {/* Expanded detail */}
-                    {expanded && (
-                      <tr key={`${log.id}-detail`} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                        <td colSpan={8} style={{ padding: '0 16px 14px', background: '#F1F5F9' }}>
-                          <div style={{
-                            background: '#FFFFFF',
-                            border: `1px solid ${currentStatus >= 500 ? '#EF4444' : currentStatus >= 400 ? '#F59E0B' : '#E2E8F0'}`,
-                            borderRadius: '8px', padding: '14px 18px',
-                            fontFamily: 'monospace', fontSize: '12px', lineHeight: 1.8,
-                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)',
-                          }}>
-                            <span style={{ color: '#64748B', fontWeight: '600' }}>ip_address: </span><span style={{ color: '#1E293B' }}>{log.ip_address}</span><br/>
-                            <span style={{ color: '#64748B', fontWeight: '600' }}>method: </span>
-                            <span style={{ color: mStyle.text, fontWeight: '600' }}>{currentMethod}</span><br/>
-                            <span style={{ color: '#64748B', fontWeight: '600' }}>path: </span>
-                            <span style={{ color: '#1E293B', wordBreak: 'break-all' }}>{log.path}</span><br/>
-                            <span style={{ color: '#64748B', fontWeight: '600' }}>status: </span>
-                            <span style={{ color: sStyle.text, fontWeight: '700' }}>{log.status}</span><br/>
-                            <span style={{ color: '#64748B', fontWeight: '600' }}>bytes: </span><span style={{ color: '#1E293B' }}>{log.bytes}</span><br/>
-                            <span style={{ color: '#64748B', fontWeight: '600' }}>user_agent: </span>
-                            <span style={{ color: '#475569', wordBreak: 'break-all' }}>{log.user_agent}</span><br/>
-                            <span style={{ color: '#64748B', fontWeight: '600' }}>log_time: </span><span style={{ color: '#1E293B' }}>{log.log_time}</span><br/>
-                            <span style={{ color: '#64748B', fontWeight: '600' }}>agent_id: </span>
-                            <span style={{ color: '#4F46E5', fontWeight: '600' }}>{log.agent_name}</span>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                  )}
+                </>
+              )
+            })}
+          </tbody>
+        </table>
 
         {/* Pagination */}
         <div style={{

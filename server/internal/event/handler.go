@@ -65,7 +65,7 @@ func (h *EventHandler) HandleNginxLog(ctx context.Context, event models.Event) e
 	}
 
 	nginxLog.AgentId = event.AgentID
-	fmt.Println(nginxLog)
+
 	if _, err := h.service.NginxLog.CreateNginxLog(models.CreateNginxLog{
 		AgentId:   nginxLog.AgentId,
 		IPAddress: nginxLog.IPAddress,
@@ -87,7 +87,7 @@ func (h *EventHandler) HandleNginxLog(ctx context.Context, event models.Event) e
 			Message:  res.Message,
 			Severity: res.Severity,
 		}); err != nil {
-			h.logger.Warn("analyze failed", "err", err)
+			return fmt.Errorf("create alert: %w", err)
 		}
 	}
 
@@ -101,13 +101,19 @@ func (h *EventHandler) HandleAppLog(ctx context.Context, event models.Event) err
 		return fmt.Errorf("parse app log: %w", err)
 	}
 
+	metadat, err := json.Marshal(appLog.Metadata)
+	if err != nil {
+		return fmt.Errorf("marshal metadata: %w", err)
+	}
+
 	if _, err := h.service.AppLog.CreateAppLog(models.CreateAppLog{
-		AgentId: event.AgentID,
-		UserId:  appLog.UserId,
-		Event:   appLog.Event,
-		Level:   appLog.Level,
-		Message: appLog.Message,
-		LogTime: appLog.LogTime,
+		AgentId:     event.AgentID,
+		ServiceName: appLog.ServiceName,
+		Event:       appLog.Event,
+		Level:       appLog.Level,
+		Message:     appLog.Message,
+		Metadata:    string(metadat),
+		LogTime:     appLog.LogTime,
 	}); err != nil {
 		return fmt.Errorf("save app log: %w", err)
 	}

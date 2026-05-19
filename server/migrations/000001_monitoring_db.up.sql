@@ -44,10 +44,11 @@ CREATE TABLE IF NOT EXISTS applogs (
     id UUID PRIMARY KEY,
     agent_id UUID NOT NULL,
 
-    user_id VARCHAR(50),
-    event VARCHAR(50),
+    service_name VARCHAR(100),
     level VARCHAR(20),
+    event VARCHAR(50),
     message TEXT,
+    metadata JSONB,
 
     log_time TIMESTAMP,
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

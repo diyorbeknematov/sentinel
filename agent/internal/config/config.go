@@ -13,11 +13,12 @@ type Config struct {
 	AgentID         string        `yaml:"agent_id"`
 	APIKey          string        `yaml:"api_key"`
 	ServerURL       string        `yaml:"server_url"`
-	AppLog          string        `yaml:"app_log"`
-	NginxLog        string        `yaml:"nginx_log"`
 	MetricsInterval time.Duration `yaml:"metrics_interval"`
 	KafkaBrokers    []string      `yaml:"kafka_brokers"`
 	KafkaTopic      string        `yaml:"kafka_topic"`
+
+	AppContainers   []string      `yaml:"app_containers"`
+	NginxLog        string        `yaml:"nginx_log"`
 }
 
 func Load(path string) (*Config, error) {
@@ -37,9 +38,6 @@ func Load(path string) (*Config, error) {
 func (c *Config) validate() error {
 	if c.AgentName == "" {
 		return fmt.Errorf("agent_name is required")
-	}
-	if c.ServerURL == "" {
-		return fmt.Errorf("server_url is required")
 	}
 	if len(c.KafkaBrokers) == 0 {
 		return fmt.Errorf("kafka_brokers is required")

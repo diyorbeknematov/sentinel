@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import api from '../api/axios'
 
-// Och rangli dizayn uchun Log darajalari stillari
 const LEVEL_STYLE = {
   error: { bg: '#FEE2E2', text: '#991B1B', row: '#FEF2F2', dot: '#EF4444' }, // Qizil
   warn:  { bg: '#FEF3C7', text: '#92400E', row: '#FFFBEB', dot: '#F59E0B' }, // Sariq/To'q sariq
@@ -118,7 +117,7 @@ export default function AppLogs() {
   const [agentId, setAgentId]       = useState('')
   const [level, setLevel]           = useState('')
   const [from, setFrom]             = useState('')
-  const [to, setTo]                 =                 useState('')
+  const [to, setTo]                 = useState('')
   const [total, setTotal]           = useState(0)
   const [expandedId, setExpandedId] = useState(null)
   const [loading, setLoading]       = useState(false)
@@ -167,10 +166,10 @@ export default function AppLogs() {
 
   const levelOptions = [
     { value: '',      label: 'All levels' },
-    { value: 'error', label: 'error', dot: '#EF4444' },
-    { value: 'warn',  label: 'warn',  dot: '#F59E0B' },
-    { value: 'info',  label: 'info',  dot: '#6366f1' },
-    { value: 'debug', label: 'debug', dot: '#64748b' },
+    { value: 'ERROR', label: 'error', dot: '#EF4444' },
+    { value: 'WARN',  label: 'warn',  dot: '#F59E0B' },
+    { value: 'INFO',  label: 'info',  dot: '#6366f1' },
+    { value: 'DEBUG', label: 'debug', dot: '#64748b' },
   ]
 
   const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id)
@@ -291,98 +290,131 @@ export default function AppLogs() {
 
       {/* Table */}
       <div style={S.card}>
-        <div style={{ overflowX: 'auto', width: '100%' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-            <colgroup>
-              <col style={{ width: '100px' }}/>
-              <col style={{ width: '120px' }}/>
-              <col style={{ width: '150px' }}/>
-              <col style={{ minWidth: '220px' }}/>
-              <col style={{ width: '120px' }}/>
-              <col style={{ width: '30px' }}/>
-            </colgroup>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #E2E8F0', background: '#F8FAFC' }}>
-                <th style={S.th}>Time</th>
-                <th style={{ ...S.th, padding: '6px 12px' }}>
-                  <DropdownFilter label="Level" options={levelOptions} value={level} onChange={setLevel}/>
-                </th>
-                <th style={S.th}>Event</th>
-                <th style={S.th}>Message</th>
-                <th style={S.th}>Agent</th>
-                <th style={S.th}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map(log => {
-                const lvl = log.level
-                const ls = LEVEL_STYLE[lvl] || LEVEL_STYLE.debug
-                const expanded = expandedId === log.id
+        <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '100px' }}/>
+            <col style={{ width: '120px' }}/>
+            <col style={{ width: '150px' }}/>
+            <col style={{ minWidth: '220px' }}/>
+            <col style={{ width: '120px' }}/>
+            <col style={{ width: '30px' }}/>
+          </colgroup>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #E2E8F0', background: '#F8FAFC' }}>
+              <th style={S.th}>Time</th>
+              <th style={{ ...S.th, padding: '6px 12px' }}>
+                <DropdownFilter label="Level" options={levelOptions} value={level} onChange={setLevel}/>
+              </th>
+              <th style={S.th}>Event</th>
+              <th style={S.th}>Message</th>
+              <th style={S.th}>Agent</th>
+              <th style={S.th}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs.map(log => {
+              const lvl = log.level?.toLowerCase() || 'debug'
+              const ls = LEVEL_STYLE[lvl] || LEVEL_STYLE.debug
+              const expanded = expandedId === log.id
 
-                return (
-                  <>
-                    <tr
-                      key={log.id}
-                      onClick={() => toggleExpand(log.id)}
-                      style={{
-                        borderBottom: expanded ? 'none' : '1px solid #E2E8F0',
-                        background: expanded ? '#F1F5F9' : ls.row,
-                        borderLeft: lvl === 'error' || lvl === 'warn' ? `3px solid ${ls.dot}` : '3px solid transparent',
-                        cursor: 'pointer',
-                      }}
-                      onMouseEnter={e => { if (!expanded) e.currentTarget.style.background = expanded ? '#F1F5F9' : (ls.row !== 'transparent' ? ls.row : '#F8FAFC') }}
-                      onMouseLeave={e => { if (!expanded) e.currentTarget.style.background = expanded ? '#F1F5F9' : ls.row }}
-                    >
-                      <td style={{ ...S.td, color: lvl === 'error' || lvl === 'warn' ? ls.text : '#64748B' }}>
-                        {formatTime(log.log_time)}
-                      </td>
-                      <td style={S.td}>
-                        <Badge label={log.level?.toUpperCase()} bg={ls.bg} text={ls.text} />
-                      </td>
-                      <td style={{ ...S.td, color: '#1E293B', fontWeight: '500' }}>{log.event}</td>
-                      <td style={{ ...S.td, color: lvl === 'error' || lvl === 'warn' ? ls.text : '#334155', fontWeight: lvl === 'error' ? '600' : '400' }}>
-                        {log.message}
-                      </td>
-                      <td style={S.td}>
-                        <Badge label={log.agent_name} bg='#F1F5F9' text='#475569' />
-                      </td>
-                      <td style={{ ...S.td, color: '#64748B', textAlign: 'center', fontSize: '14px' }}>
-                        <span style={{ transition: 'transform 0.2s', display: 'inline-block', transform: expanded ? 'rotate(90deg)' : 'none' }}>›</span>
+              return (
+                <>
+                  <tr
+                    key={log.id}
+                    onClick={() => toggleExpand(log.id)}
+                    style={{
+                      borderBottom: expanded ? 'none' : '1px solid #E2E8F0',
+                      background: expanded ? '#F1F5F9' : ls.row,
+                      borderLeft: lvl === 'error' || lvl === 'warn' ? `3px solid ${ls.dot}` : '3px solid transparent',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={e => { if (!expanded) e.currentTarget.style.background = expanded ? '#F1F5F9' : (ls.row !== 'transparent' ? ls.row : '#F8FAFC') }}
+                    onMouseLeave={e => { if (!expanded) e.currentTarget.style.background = expanded ? '#F1F5F9' : ls.row }}
+                  >
+                    <td style={{ ...S.td, color: lvl === 'error' || lvl === 'warn' ? ls.text : '#64748B' }}>
+                      {formatTime(log.log_time)}
+                    </td>
+                    <td style={S.td}>
+                      <Badge label={log.level?.toUpperCase()} bg={ls.bg} text={ls.text} />
+                    </td>
+                    <td style={{ ...S.td, color: '#1E293B', fontWeight: '500' }}>{log.event}</td>
+                    <td style={{ ...S.td, color: lvl === 'error' || lvl === 'warn' ? ls.text : '#334155', fontWeight: lvl === 'error' ? '600' : '400' }}>
+                      {log.message}
+                    </td>
+                    <td style={S.td}>
+                      <Badge label={log.agent_name} bg='#F1F5F9' text='#475569' />
+                    </td>
+                    <td style={{ ...S.td, color: '#64748B', textAlign: 'center', fontSize: '14px' }}>
+                      <span style={{ transition: 'transform 0.2s', display: 'inline-block', transform: expanded ? 'rotate(90deg)' : 'none' }}>›</span>
+                    </td>
+                  </tr>
+
+                  {/* Expanded */}
+                  {expanded && (
+                    <tr key={`${log.id}-exp`} style={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <td colSpan={6} style={{ padding: '0 16px 14px', background: '#F1F5F9' }}>
+                        <div style={{
+                          background: '#FFFFFF',
+                          border: `1px solid ${lvl === 'error' ? '#EF4444' : lvl === 'warn' ? '#F59E0B' : '#E2E8F0'}`,
+                          borderRadius: '8px', padding: '14px 18px',
+                          fontFamily: 'monospace', fontSize: '12px', lineHeight: 1.8,
+                          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)',
+                        }}>
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>log_time:     </span>
+                          <span style={{ color: '#1E293B' }}> {new Date(log.log_time).toLocaleString()} </span>
+                          <br/>
+
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>recorded_at:  </span>
+                          <span style={{ color: '#1E293B' }}> {new Date(log.recorded_at).toLocaleString()} </span>
+                          <br/>
+
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>service:      </span>
+                          <span style={{ color: '#0F172A', fontWeight: '600' }}> {log.service_name} </span>
+                          <br/>
+
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>level:        </span>
+                          <span style={{ color: ls.text, fontWeight: '700' }}> {log.level} </span>
+                          <br/>
+
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>event:        </span>
+                          <span style={{ color: '#1E293B' }}> {log.event} </span>
+                          <br/>
+
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>message:      </span>
+                          <span
+                            style={{
+                              color:
+                                lvl === 'error' || lvl === 'warn'
+                                  ? ls.text
+                                  : '#1E293B',
+                              wordBreak: 'break-all',
+                            }}
+                          > {log.message}
+                          </span>
+                          <br/>
+
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>agent_name:     </span>
+                          <span style={{ color: '#4F46E5', fontWeight: '600' }}> {log.agent_name} </span>
+                          <br/>
+
+                          <span style={{ color: '#64748B', fontWeight: '600' }}>metadata:     </span>
+                          <span
+                            style={{
+                              color: '#1E293B',
+                              fontFamily: 'monospace',
+                              wordBreak: 'break-all',
+                            }}
+                          > {log.metadata ? JSON.stringify(log.metadata, null, 2) : '{}'}
+                          </span>
+                        </div>
                       </td>
                     </tr>
-
-                    {/* Expanded */}
-                    {expanded && (
-                      <tr key={`${log.id}-exp`} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                        <td colSpan={6} style={{ padding: '0 16px 14px', background: '#F1F5F9' }}>
-                          <div style={{
-                            background: '#FFFFFF',
-                            border: `1px solid ${lvl === 'error' ? '#EF4444' : lvl === 'warn' ? '#F59E0B' : '#E2E8F0'}`,
-                            borderRadius: '8px', padding: '14px 18px',
-                            fontFamily: 'monospace', fontSize: '12px', lineHeight: 1.8,
-                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)',
-                          }}>
-                            <span style={{ color: '#64748B', fontWeight: '600' }}>log_time:  </span><span style={{ color: '#1E293B' }}>{log.log_time}</span><br/>
-                            <span style={{ color: '#64748B', fontWeight: '600' }}>level:     </span>
-                            <span style={{ color: ls.text, fontWeight: '700' }}>{log.level}</span><br/>
-                            <span style={{ color: '#64748B', fontWeight: '600' }}>event:     </span>
-                            <span style={{ color: '#1E293B' }}>{log.event}</span><br/>
-                            <span style={{ color: '#64748B', fontWeight: '600' }}>message:   </span>
-                            <span style={{ color: lvl === 'error' || lvl === 'warn' ? ls.text : '#1E293B', wordBreak: 'break-all' }}>{log.message}</span><br/>
-                            <span style={{ color: '#64748B', fontWeight: '600' }}>user_id:   </span>
-                            <span style={{ color: '#4F46E5', fontWeight: '600' }}>{log.user_id}</span><br/>
-                            <span style={{ color: '#64748B', fontWeight: '600' }}>agent_id:  </span>
-                            <span style={{ color: '#4F46E5', fontWeight: '600' }}>{log.agent_name}</span>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                  )}
+                </>
+              )
+            })}
+          </tbody>
+        </table>
 
         {/* Pagination */}
         <div style={{
@@ -455,7 +487,7 @@ export default function AppLogs() {
         </div>
 
         {logs.length === 0 && (
-          <div style={{ padding: '48px', textAlign: 'center', color: '#94A3B8', fontFamily: 'monospace', fontSize: '13px' }}>
+          <div style={{ padding: '55px', textAlign: 'center', color: '#94A3B8', fontFamily: 'monospace', fontSize: '13px' }}>
             No logs found
           </div>
         )}

@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/diyorbek/sentinel/internal/models"
@@ -44,7 +45,7 @@ func (r *nginxLogRepo) CreateNginxLog(log models.CreateNginxLog) (uuid.UUID, err
 		log.UserAgent,
 		log.LogTime,
 	); err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, errors.New("failed to create nginx log: " + err.Error())
 	}
 
 	return log.Id, nil
@@ -81,7 +82,7 @@ func (r *nginxLogRepo) GetNginxLogByID(id uuid.UUID) (models.NginxLog, error) {
 		&log.LogTime,
 		&log.RecordedAt,
 	); err != nil {
-		return models.NginxLog{}, err
+		return models.NginxLog{}, errors.New("failed to get nginx log: " + err.Error())
 	}
 
 	return log, nil
@@ -155,7 +156,7 @@ func (r *nginxLogRepo) ListNginxLogs(filter models.FilterNginxLogDB) ([]models.N
 	// 🔹 MAIN QUERY
 	rows, err := r.db.NamedQuery(baseQuery, params)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New("failed to list nginx logs: " + err.Error())
 	}
 	defer rows.Close()
 
@@ -176,7 +177,7 @@ func (r *nginxLogRepo) ListNginxLogs(filter models.FilterNginxLogDB) ([]models.N
 			&l.RecordedAt,
 		)
 		if err != nil {
-			return nil, 0, err
+			return nil, 0, errors.New("failed to scan nginx log: " + err.Error())
 		}
 
 		logs = append(logs, l)
@@ -185,14 +186,14 @@ func (r *nginxLogRepo) ListNginxLogs(filter models.FilterNginxLogDB) ([]models.N
 	// 🔹 COUNT QUERY
 	countQuery, args, err := sqlx.Named(countQuery, params)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New("failed to prepare count query: " + err.Error())
 	}
 
 	countQuery = sqlx.Rebind(sqlx.DOLLAR, countQuery)
 
 	var total int
 	if err := r.db.Get(&total, countQuery, args...); err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New("failed to get nginx log count: " + err.Error())
 	}
 
 	return logs, total, nil

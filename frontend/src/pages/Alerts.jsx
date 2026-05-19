@@ -131,9 +131,9 @@ export default function Alerts() {
   const limit = 30
 
   const counts = {
-    critical: alerts.filter(a => a.severity === 'critical').length,
-    warning:  alerts.filter(a => a.severity === 'warning').length,
-    high:     alerts.filter(a => a.severity === 'high').length,
+    critical: alerts.filter(a => a.severity === 'CRITICAL').length,
+    warning:  alerts.filter(a => a.severity === 'WARNING').length,
+    high:     alerts.filter(a => a.severity === 'HIGH').length,
     unread:   alerts.filter(a => !a.is_read).length,
   }
 
@@ -459,95 +459,93 @@ export default function Alerts() {
 
       {/* Table */}
       <div style={S.card}>
-        <div style={{ overflowX: 'auto', width: '100%' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-            <colgroup>
-              <col style={{ width: '20px' }}/>
-              <col style={{ width: '120px' }}/>
-              <col style={{ width: '140px' }}/>
-              <col style={{ width: '130px' }}/>
-              <col style={{ minWidth: '200px' }}/>
-              <col style={{ width: '110px' }}/>
-              <col style={{ width: '120px' }}/>
-              <col style={{ width: '110px' }}/>
-            </colgroup>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #E2E8F0', background: '#F8FAFC' }}>
-                <th style={S.th}></th>
-                <th style={S.th}>Time</th>
-                <th style={{ ...S.th, padding: '6px 12px' }}>
-                  <DropdownFilter label="Severity" options={severityOptions} value={severity} onChange={setSeverity}/>
-                </th>
-                <th style={S.th}>Type</th>
-                <th style={S.th}>Message</th>
-                <th style={S.th}>Agent</th>
-                <th style={{ ...S.th, padding: '6px 12px' }}>
-                  <DropdownFilter label="Status" options={readOptions} value={isRead} onChange={setIsRead}/>
-                </th>
-                <th style={S.th}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {alerts.map(alert => {
-                const s = SEV_STYLE[alert.severity] || SEV_STYLE.warning
-                return (
-                  <tr
-                    key={alert.id}
-                    onClick={() => setSelectedAlert(alert)}
-                    style={{
-                      borderBottom: '1px solid #E2E8F0',
-                      background: !alert.is_read ? s.row : 'transparent',
-                      borderLeft: !alert.is_read ? `3px solid ${s.dot}` : '3px solid transparent',
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = !alert.is_read ? s.row : '#F8FAFC'}
-                    onMouseLeave={e => e.currentTarget.style.background = !alert.is_read ? s.row : 'transparent'}
-                  >
-                    <td style={{ padding: '12px 0 12px 12px' }}>
-                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.dot, display: 'inline-block' }}/>
-                    </td>
-                    <td style={{ ...S.td, color: '#64748B' }}>{formatTime(alert.created_at)}</td>
-                    <td style={S.td}>
-                      <Badge label={alert.severity?.toUpperCase()} bg={s.bg} text={s.text}/>
-                    </td>
-                    <td style={{ ...S.td, color: '#1E293B', fontWeight: '500' }}>{alert.type}</td>
-                    <td style={{ ...S.td, color: s.text, fontWeight: !alert.is_read ? '600' : '400' }}>{alert.message}</td>
-                    <td style={S.td}>
-                      <Badge label={alert.agent_name} bg='#F1F5F9' text='#475569'/>
-                    </td>
-                    <td style={S.td}>
-                      {alert.is_read
-                        ? <span style={{ fontSize: '11px', color: '#94A3B8', fontFamily: 'monospace' }}>read</span>
-                        : <span style={{ fontSize: '11px', color: '#3B82F6', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
-                            <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#3B82F6', display: 'inline-block' }}/>
-                            unread
-                          </span>
-                      }
-                    </td>
-                    <td style={S.td} onClick={e => e.stopPropagation()}>
-                      {!alert.is_read && (
-                        <button
-                          onClick={() => markRead(alert.id)}
-                          disabled={markingId === alert.id}
-                          style={{
-                            fontSize: '11px', padding: '4px 10px', borderRadius: '4px',
-                            border: '1px solid #10B981',
-                            background: '#E8F5E9',
-                            color: markingId === alert.id ? '#94A3B8' : '#15803D',
-                            cursor: markingId === alert.id ? 'not-allowed' : 'pointer',
-                            fontFamily: 'monospace', fontWeight: '600',
-                          }}
-                        >
-                          {markingId === alert.id ? '...' : 'Mark read'}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '20px' }}/>
+            <col style={{ width: '120px' }}/>
+            <col style={{ width: '140px' }}/>
+            <col style={{ width: '130px' }}/>
+            <col style={{ minWidth: '200px' }}/>
+            <col style={{ width: '110px' }}/>
+            <col style={{ width: '120px' }}/>
+            <col style={{ width: '110px' }}/>
+          </colgroup>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #E2E8F0', background: '#F8FAFC' }}>
+              <th style={S.th}></th>
+              <th style={S.th}>Time</th>
+              <th style={{ ...S.th, padding: '6px 12px' }}>
+                <DropdownFilter label="Severity" options={severityOptions} value={severity} onChange={setSeverity}/>
+              </th>
+              <th style={S.th}>Type</th>
+              <th style={S.th}>Message</th>
+              <th style={S.th}>Agent</th>
+              <th style={{ ...S.th, padding: '6px 12px' }}>
+                <DropdownFilter label="Status" options={readOptions} value={isRead} onChange={setIsRead}/>
+              </th>
+              <th style={S.th}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {alerts.map(alert => {
+              const s = SEV_STYLE[alert.severity] || SEV_STYLE.warning
+              return (
+                <tr
+                  key={alert.id}
+                  onClick={() => setSelectedAlert(alert)}
+                  style={{
+                    borderBottom: '1px solid #E2E8F0',
+                    background: !alert.is_read ? s.row : 'transparent',
+                    borderLeft: !alert.is_read ? `3px solid ${s.dot}` : '3px solid transparent',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = !alert.is_read ? s.row : '#F8FAFC'}
+                  onMouseLeave={e => e.currentTarget.style.background = !alert.is_read ? s.row : 'transparent'}
+                >
+                  <td style={{ padding: '12px 0 12px 12px' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.dot, display: 'inline-block' }}/>
+                  </td>
+                  <td style={{ ...S.td, color: '#64748B' }}>{formatTime(alert.created_at)}</td>
+                  <td style={S.td}>
+                    <Badge label={alert.severity?.toUpperCase()} bg={s.bg} text={s.text}/>
+                  </td>
+                  <td style={{ ...S.td, color: '#1E293B', fontWeight: '500' }}>{alert.type}</td>
+                  <td style={{ ...S.td, color: s.text, fontWeight: !alert.is_read ? '600' : '400' }}>{alert.message}</td>
+                  <td style={S.td}>
+                    <Badge label={alert.agent_name} bg='#F1F5F9' text='#475569'/>
+                  </td>
+                  <td style={S.td}>
+                    {alert.is_read
+                      ? <span style={{ fontSize: '11px', color: '#94A3B8', fontFamily: 'monospace' }}>read</span>
+                      : <span style={{ fontSize: '11px', color: '#3B82F6', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
+                          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#3B82F6', display: 'inline-block' }}/>
+                          unread
+                        </span>
+                    }
+                  </td>
+                  <td style={S.td} onClick={e => e.stopPropagation()}>
+                    {!alert.is_read && (
+                      <button
+                        onClick={() => markRead(alert.id)}
+                        disabled={markingId === alert.id}
+                        style={{
+                          fontSize: '11px', padding: '4px 10px', borderRadius: '4px',
+                          border: '1px solid #10B981',
+                          background: '#E8F5E9',
+                          color: markingId === alert.id ? '#94A3B8' : '#15803D',
+                          cursor: markingId === alert.id ? 'not-allowed' : 'pointer',
+                          fontFamily: 'monospace', fontWeight: '600',
+                        }}
+                      >
+                        {markingId === alert.id ? '...' : 'Mark read'}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
 
         {/* Pagination */}
         <div style={{
@@ -620,7 +618,7 @@ export default function Alerts() {
         </div>
 
         {alerts.length === 0 && (
-          <div style={{ padding: '48px', textAlign: 'center', color: '#94A3B8', fontFamily: 'monospace', fontSize: '13px' }}>
+          <div style={{ padding: '55px', textAlign: 'center', color: '#94A3B8', fontFamily: 'monospace', fontSize: '13px' }}>
             No alerts found
           </div>
         )}

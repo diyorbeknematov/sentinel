@@ -16,6 +16,13 @@ type Event struct {
 	Payload any       `json:"payload"`
 }
 
+type RawLog map[string]any
+var TimeFormats = []string{
+	time.RFC3339,
+	"2006-01-02 15:04:05",
+	"02/Jan/2006:15:04:05 -0700",
+}
+
 type MetricPayload struct {
 	CPU     float64   `json:"cpu"`
 	RAM     float64   `json:"ram"`
@@ -24,11 +31,12 @@ type MetricPayload struct {
 }
 
 type AppLogPayload struct {
-	UserId  string    `json:"user_id"`
-	Level   string    `json:"level"`
-	Event   string    `json:"event"`
-	Message string    `json:"message"`
-	LogTime time.Time `json:"log_time"`
+	ServiceName string         `json:"service_name"`
+	Level       string         `json:"level"`
+	Event       string         `json:"event"`
+	Message     string         `json:"message"`
+	LogTime     time.Time      `json:"log_time"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
 }
 
 type NginxLogPayload struct {

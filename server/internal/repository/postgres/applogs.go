@@ -1,12 +1,16 @@
 package postgres
 
 import (
+	"encoding/json"
+	"errors"
 	"strings"
 
 	"github.com/diyorbek/sentinel/internal/models"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
+
+var metadataType []byte
 
 type appLogRepo struct {
 	db *sqlx.DB
@@ -23,23 +27,25 @@ func (r *appLogRepo) CreateAppLog(log models.CreateAppLog) (uuid.UUID, error) {
 	INSERT INTO applogs (
 		id,
 		agent_id,
-		user_id,
+		service_name,
 		event,
 		level,
 		message,
+		metadata,
 		log_time
-	) VALUES ($1, $2, $3, $4, $5, $6, &7);
+	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
 	`
 	if _, err := r.db.Exec(query,
 		log.Id,
 		log.AgentId,
-		log.UserId,
+		log.ServiceName,
 		log.Event,
 		log.Level,
 		log.Message,
+		log.Metadata,
 		log.LogTime,
 	); err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, errors.New("failed to create app log: " + err.Error())
 	}
 
 	return log.Id, nil
@@ -51,9 +57,11 @@ func (r *appLogRepo) GetLogByID(id uuid.UUID) (models.Log, error) {
 	SELECT
 		id,
 		agent_id,
+		service_name,
 		event,
 		level,
 		message,
+		metadata,
 		log_time,
 		recorded_at
 	FROM applogs
@@ -63,13 +71,19 @@ func (r *appLogRepo) GetLogByID(id uuid.UUID) (models.Log, error) {
 	if err := r.db.QueryRow(query, id).Scan(
 		&log.Id,
 		&log.AgentId,
+		&log.ServiceName,
 		&log.Event,
 		&log.Level,
 		&log.Message,
+		&metadataType,
 		&log.LogTime,
 		&log.RecordedAt,
 	); err != nil {
-		return models.Log{}, err
+		return models.Log{}, errors.New("failed to get app log: " + err.Error())
+	}
+
+	if err := json.Unmarshal(metadataType, &log.Metadata); err != nil {
+		return models.Log{}, errors.New("failed to unmarshal metadata: " + err.Error())
 	}
 
 	return log, nil
@@ -81,10 +95,11 @@ func (r *appLogRepo) ListLogs(filter models.FilterAppLogDB) ([]models.AppLogResp
 	SELECT 
 		ap.id,
 		a.name AS agent_name,
-		ap.user_id,
+		ap.service_name,
 		ap.event,
 		ap.level,
 		ap.message,
+		ap.metadata,
 		ap.log_time,
 		ap.recorded_at
 	FROM applogs ap
@@ -143,7 +158,7 @@ func (r *appLogRepo) ListLogs(filter models.FilterAppLogDB) ([]models.AppLogResp
 	// MAIN QUERY
 	rows, err := r.db.NamedQuery(baseQuery, params)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New("failed to list app logs: " + err.Error())
 	}
 	defer rows.Close()
 
@@ -155,14 +170,19 @@ func (r *appLogRepo) ListLogs(filter models.FilterAppLogDB) ([]models.AppLogResp
 		if err := rows.Scan(
 			&l.Id,
 			&l.AgentName,
-			&l.UserId,
+			&l.ServiceName,
 			&l.Event,
 			&l.Level,
 			&l.Message,
+			&metadataType,
 			&l.LogTime,
 			&l.RecordedAt,
 		); err != nil {
-			return nil, 0, err
+			return nil, 0, errors.New("failed to scan app log: " + err.Error())
+		}
+
+		if err := json.Unmarshal(metadataType, &l.Metadata); err != nil {
+			return nil, 0, errors.New("failed to unmarshal metadata: " + err.Error())
 		}
 
 		logs = append(logs, l)
@@ -171,14 +191,14 @@ func (r *appLogRepo) ListLogs(filter models.FilterAppLogDB) ([]models.AppLogResp
 	// COUNT QUERY
 	countSQL, args, err := sqlx.Named(countQuery, params)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New("failed to prepare count query: " + err.Error())
 	}
 
 	countSQL = r.db.Rebind(countSQL)
 
 	var total int
 	if err := r.db.Get(&total, countSQL, args...); err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New("failed to get log count: " + err.Error())
 	}
 
 	return logs, total, nil

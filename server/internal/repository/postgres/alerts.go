@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/diyorbek/sentinel/internal/models"
@@ -35,7 +36,7 @@ func (r *alertRepo) CreateAlert(alert models.CreateAlert) (uuid.UUID, error) {
 		alert.Message,
 		alert.Severity,
 	); err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, errors.New("failed to create alert: " + err.Error())
 	}
 
 	return alert.Id, nil
@@ -65,7 +66,7 @@ func (r *alertRepo) GetAlertByID(id uuid.UUID) (models.Alert, error) {
 		&alert.IsRead,
 		&alert.CreatedAt,
 	); err != nil {
-		return models.Alert{}, err
+		return models.Alert{}, errors.New("failed to get alert: " + err.Error())
 	}
 
 	return alert, nil
@@ -149,7 +150,7 @@ func (r *alertRepo) ListAlerts(filter models.FilterAlertDB) ([]models.AlertRespo
 	// Execute the main query
 	rows, err := r.db.NamedQuery(baseQuery, params)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New("failed to list alerts: " + err.Error())
 	}
 	defer rows.Close()
 
@@ -167,7 +168,7 @@ func (r *alertRepo) ListAlerts(filter models.FilterAlertDB) ([]models.AlertRespo
 			&a.IsRead,
 			&a.CreatedAt,
 		); err != nil {
-			return nil, 0, err
+			return nil, 0, errors.New("failed to scan alert: " + err.Error())
 		}
 
 		alerts = append(alerts, a)
@@ -176,14 +177,14 @@ func (r *alertRepo) ListAlerts(filter models.FilterAlertDB) ([]models.AlertRespo
 	// COUNT QUERY
 	countSQL, args, err := sqlx.Named(countQuery, params)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New("failed to prepare count query: " + err.Error())
 	}
 
 	countSQL = r.db.Rebind(countSQL)
 
 	var total int
 	if err := r.db.Get(&total, countSQL, args...); err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New("failed to execute count query: " + err.Error())
 	}
 
 	return alerts, total, nil
@@ -200,12 +201,12 @@ func (r *alertRepo) MarkAlertRead(id uuid.UUID) error {
 	// Execute the query
 	row, err := r.db.Exec(query, id)
 	if err != nil {
-		return err
+		return errors.New("failed to mark alert: " + err.Error())
 	}
 
 	rowAffected, err := row.RowsAffected()
 	if err != nil {
-		return err
+		return errors.New("failed to get rows affected: " + err.Error())
 	}
 
 	if rowAffected == 0 {

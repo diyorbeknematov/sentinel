@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"errors"
 
 	"github.com/diyorbek/sentinel/internal/models"
 	"github.com/google/uuid"
@@ -38,7 +39,7 @@ func (r *accountRepo) CreateAccount(account models.CreateAccount) (uuid.UUID, er
 		account.APIKey,
 	)
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, errors.New("failed to create account: " + err.Error())
 	}
 
 	return account.Id, nil
@@ -69,7 +70,7 @@ func (r *accountRepo) GetByAPIKey(apiKey string) (models.Account, error) {
 		if err == sql.ErrNoRows {
 			return models.Account{}, errNoRowsAffected
 		}
-		return models.Account{}, err
+		return models.Account{}, errors.New("failed to get account by API key: " + err.Error())
 	}
 
 	return account, nil
@@ -100,7 +101,7 @@ func (r *accountRepo) GetByUsername(username string) (models.Account, error) {
 		if err == sql.ErrNoRows {
 			return models.Account{}, errNoRowsAffected
 		}
-		return models.Account{}, err
+		return models.Account{}, errors.New("failed to get account by username: " + err.Error())
 	}
 
 	return account, nil
@@ -130,7 +131,7 @@ func (r *accountRepo) GetByEmail(email string) (models.Account, error) {
 		if err == sql.ErrNoRows {
 			return models.Account{}, errNoRowsAffected
 		}
-		return models.Account{}, err
+		return models.Account{}, errors.New("failed to get account by email: " + err.Error())
 	}
 
 	return account, nil
@@ -161,7 +162,7 @@ func (r *accountRepo) GetByID(id uuid.UUID) (models.Account, error) {
 		if err == sql.ErrNoRows {
 			return models.Account{}, errNoRowsAffected
 		}
-		return models.Account{}, err
+		return models.Account{}, errors.New("failed to get account by ID: " + err.Error())
 	}
 
 	return account, nil
@@ -183,12 +184,12 @@ func (r *accountRepo) UpdateAccount(req models.UpdateAccountDB) error {
 		req.Password,
 	)
 	if err != nil {
-		return err
+		return errors.New("failed to update account: " + err.Error())
 	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return errors.New("failed to get rows affected: " + err.Error())
 	}
 
 	if rows == 0 {
@@ -204,12 +205,12 @@ func (r *accountRepo) DeleteAccount(id uuid.UUID) error {
 
 	res, err := r.db.Exec(query, id)
 	if err != nil {
-		return err
+		return errors.New("failed to delete account: " + err.Error())
 	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return errors.New("failed to get rows affected: " + err.Error())
 	}
 
 	if rows == 0 {

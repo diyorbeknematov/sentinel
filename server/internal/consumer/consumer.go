@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/diyorbek/sentinel/internal/models"
+	"github.com/diyorbek/sentinel/pkg/apperrors"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -57,7 +58,7 @@ func (c *Consumer) Run(ctx context.Context) error {
 
 		// qayta ishlaymiz
 		if err := c.process(ctx, msg); err != nil {
-			c.logger.Warn("process failed, skipping", "err", err, "offset", msg.Offset)
+			apperrors.LogByError(c.logger, "process failed, skipping", err)
 		}
 
 		// muvaffaqiyatli o'qildi — Kafka'ga bildirамiz
