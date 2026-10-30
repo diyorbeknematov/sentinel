@@ -72,7 +72,7 @@ func Load() *Config {
 		MailerFrom:     getEnv("MAILER_FROM", "noreply@sentinel.com"),
 		
 		KafkaBrokers: strings.Split(getEnv("KAFKA_BROKERS", "localhost:9092"), ","),
-		KafkaExternalBrokers: strings.Split(getEnv("KAFKA_EXTERNAL_ROKERS", "localhost:9092"), ","),
+		KafkaExternalBrokers: strings.Split(getEnv("KAFKA_EXTERNAL_BROKERS", "localhost:9092"), ","),
 		KafkaTopic:   getEnv("KAFKA_TOPIC", "test-topic"),
 		KafkaGroupID: getEnv("KAFKA_GROUP_ID", "test-group"),
 	}

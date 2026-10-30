@@ -25,9 +25,12 @@ func StartNginxLogCollector(ctx context.Context, cfg *config.Config, eventCh cha
 		slog.Error("open nginx log failed", "path", cfg.NginxLog, "err", err)
 		return
 	}
-	defer file.Close()
+	// file is reopened when the log is rotated, so close whichever one is open at the end.
+	defer func() { file.Close() }()
 
-	if _, err := file.Seek(0, io.SeekEnd); err != nil {
+	// offset is how many bytes of the file have been read; it is used to notice a truncated file.
+	offset, err := file.Seek(0, io.SeekEnd)
+	if err != nil {
 		slog.Error("seek failed", "err", err)
 		return
 	}
@@ -38,6 +41,7 @@ func StartNginxLogCollector(ctx context.Context, cfg *config.Config, eventCh cha
 
 	for {
 		line, err := reader.ReadString('\n')
+		offset += int64(len(line))
 
 		if len(line) > 0 {
 			nginxLog, parseErr := parseNginxLog(line)
@@ -59,6 +63,15 @@ func StartNginxLogCollector(ctx context.Context, cfg *config.Config, eventCh cha
 
 		if err != nil {
 			if err == io.EOF {
+				// logrotate faylni almashtirgan yoki tozalagan bo'lsa, yangisini boshidan ochamiz
+				if rotated(file, cfg.NginxLog, offset) {
+					if reopened, openErr := os.Open(cfg.NginxLog); openErr == nil {
+						file.Close()
+						file, reader, offset = reopened, bufio.NewReader(reopened), 0
+						slog.Info("nginx log was rotated, reopened", "path", cfg.NginxLog)
+					}
+				}
+
 				// yangi satr yo'q — biroz kutib qayta urinamiz
 				select {
 				case <-time.After(200 * time.Millisecond):
@@ -71,6 +84,23 @@ func StartNginxLogCollector(ctx context.Context, cfg *config.Config, eventCh cha
 			return
 		}
 	}
+}
+
+// rotated reports whether the file at path is no longer the one that is open (logrotate renamed it)
+// or has become smaller than what was read (it was truncated).
+func rotated(open *os.File, path string, offset int64) bool {
+	current, err := os.Stat(path)
+	if err != nil {
+		// nginx has not created the new file yet: check again on the next pass.
+		return false
+	}
+
+	opened, err := open.Stat()
+	if err != nil {
+		return true
+	}
+
+	return !os.SameFile(opened, current) || current.Size() < offset
 }
 
 func parseNginxLog(line string) (*models.NginxLogPayload, error) {

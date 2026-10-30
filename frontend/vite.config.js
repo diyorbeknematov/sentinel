@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/sentinel': {
-        target: 'http://localhost',
+        target: 'http://0.0.0.0',
         changeOrigin: true,
       }
     }

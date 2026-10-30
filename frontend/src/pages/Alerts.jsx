@@ -190,9 +190,9 @@ export default function Alerts() {
 
   const severityOptions = [
     { value: '',         label: 'All severity' },
-    { value: 'critical', label: 'critical', dot: '#EF4444' },
-    { value: 'warning',  label: 'warning',  dot: '#F59E0B' },
-    { value: 'high',     label: 'high',     dot: '#A855F7' },
+    { value: 'CRITICAL', label: 'critical', dot: '#EF4444' },
+    { value: 'WARNING',  label: 'warning',  dot: '#F59E0B' },
+    { value: 'HIGH',     label: 'high',     dot: '#A855F7' },
   ]
 
   const readOptions = [
@@ -221,7 +221,7 @@ export default function Alerts() {
             onClick={e => e.stopPropagation()}
             style={{
               background: '#FFFFFF',
-              border: `1px solid ${SEV_STYLE[selectedAlert.severity]?.dot || '#E2E8F0'}`,
+              border: `1px solid ${SEV_STYLE[selectedAlert.severity?.toLowerCase()]?.dot || '#E2E8F0'}`,
               borderRadius: '14px', padding: '24px',
               width: '100%', maxWidth: '500px',
               boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
@@ -232,7 +232,7 @@ export default function Alerts() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{
                   width: '8px', height: '8px', borderRadius: '50%',
-                  background: SEV_STYLE[selectedAlert.severity]?.dot,
+                  background: SEV_STYLE[selectedAlert.severity?.toLowerCase() ]?.dot,
                   display: 'inline-block',
                 }}/>
                 <span style={{ fontSize: '16px', fontWeight: '600', color: '#1E293B' }}>
@@ -240,8 +240,8 @@ export default function Alerts() {
                 </span>
                 <Badge
                   label={selectedAlert.severity}
-                  bg={SEV_STYLE[selectedAlert.severity]?.bg}
-                  text={SEV_STYLE[selectedAlert.severity]?.text}
+                  bg={SEV_STYLE[selectedAlert.severity?.toLowerCase()]?.bg}
+                  text={SEV_STYLE[selectedAlert.severity?.toLowerCase()]?.text}
                 />
               </div>
               <button
@@ -260,7 +260,7 @@ export default function Alerts() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
               {[
                 { label: 'ID',       value: selectedAlert.id },
-                { label: 'Severity', value: selectedAlert.severity, color: SEV_STYLE[selectedAlert.severity]?.text },
+                { label: 'Severity', value: selectedAlert.severity, color: SEV_STYLE[selectedAlert.severity?.toLowerCase()]?.text },
                 { label: 'Type',     value: selectedAlert.type },
                 { label: 'Message',  value: selectedAlert.message, color: '#1E293B' },
                 { label: 'Agent',    value: selectedAlert.agent_name, color: '#4F46E5' },
@@ -488,7 +488,7 @@ export default function Alerts() {
           </thead>
           <tbody>
             {alerts.map(alert => {
-              const s = SEV_STYLE[alert.severity] || SEV_STYLE.warning
+              const s = SEV_STYLE[alert.severity?.toLowerCase()] || SEV_STYLE.warning
               return (
                 <tr
                   key={alert.id}
